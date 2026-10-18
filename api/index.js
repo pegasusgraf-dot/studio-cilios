@@ -46,22 +46,18 @@ module.exports = async (req, res) => {
     const pathname = new URL(req.url || '/', 'http://localhost').pathname;
 
     if (!process.env.DATABASE_URL) {
-      if (req.method === 'GET' && pathname === '/api/health') {
-        return sendJson(res, 200, { ok: false, message: 'DATABASE_URL não configurada.' });
-      }
       return sendJson(res, 500, { mensagem: 'DATABASE_URL não configurada no ambiente da Vercel.' });
     }
 
-    // Health
     if (req.method === 'GET' && pathname === '/api/health') {
       return sendJson(res, 200, { ok: true, message: 'Postgres reachable' });
     }
 
-    // LOGIN
     if (req.method === 'POST' && pathname === '/api/login') {
       const body = await parseBody(req);
       const { email, senha } = body || {};
       if (!email || !senha) return sendJson(res, 400, { mensagem: 'E-mail e senha são obrigatórios.' });
+
       const normalizedEmail = String(email).trim().toLowerCase();
       const { rows } = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [normalizedEmail]);
       const user = rows[0];
@@ -69,26 +65,25 @@ module.exports = async (req, res) => {
       return sendJson(res, 200, { usuario: normalizeUser(user) });
     }
 
-    // CADASTRO
     if (req.method === 'POST' && pathname === '/api/cadastro') {
       const body = await parseBody(req);
       const { nome, email, senha } = body || {};
       if (!nome || !email || !senha) return sendJson(res, 400, { mensagem: 'Nome, e-mail e senha são obrigatórios.' });
+
       const normalizedEmail = String(email).trim().toLowerCase();
       const { rows: existing } = await pool.query('SELECT id FROM users WHERE email = $1 LIMIT 1', [normalizedEmail]);
       if (existing[0]) return sendJson(res, 400, { mensagem: 'Este e-mail já está cadastrado.' });
+
       const id = makeId();
       const insert = await pool.query('INSERT INTO users (id,nome,email,senha,tipo) VALUES ($1,$2,$3,$4,$5) RETURNING *', [id, String(nome).trim(), normalizedEmail, String(senha), 'cliente']);
       return sendJson(res, 201, { mensagem: 'Cadastrado com sucesso!', usuario: normalizeUser(insert.rows[0]) });
     }
 
-    // SERVIÇOS - listar
     if (req.method === 'GET' && pathname === '/api/servicos') {
       const { rows } = await pool.query('SELECT * FROM services ORDER BY created_at ASC NULLS LAST');
       return sendJson(res, 200, rows.map(normalizeService));
     }
 
-    // SERVIÇOS - criar
     if (req.method === 'POST' && pathname === '/api/servicos') {
       const body = await parseBody(req);
       const { nome, valor, duracao_minutos } = body || {};
@@ -98,7 +93,6 @@ module.exports = async (req, res) => {
       return sendJson(res, 201, normalizeService(rows[0]));
     }
 
-    // SERVIÇOS - deletar
     if (req.method === 'DELETE' && pathname.startsWith('/api/servicos/')) {
       const id = pathname.split('/').filter(Boolean).at(-1);
       if (!id) return sendJson(res, 400, { mensagem: 'ID do serviço obrigatório.' });
@@ -106,7 +100,6 @@ module.exports = async (req, res) => {
       return sendJson(res, 204, {});
     }
 
-    // AGENDAMENTOS - listar
     if (req.method === 'GET' && pathname === '/api/agendamentos') {
       const { rows } = await pool.query(`
         SELECT a.*, s.nome AS servico_nome, s.valor AS servico_valor, u.nome AS usuario_nome
@@ -119,7 +112,6 @@ module.exports = async (req, res) => {
       return sendJson(res, 200, mapped);
     }
 
-    // AGENDAMENTOS - criar
     if (req.method === 'POST' && pathname === '/api/agendamentos') {
       const body = await parseBody(req);
       const { servico_id, data_hora, usuario_id } = body || {};
@@ -137,7 +129,6 @@ module.exports = async (req, res) => {
       return sendJson(res, 201, normalizeAppointment(rows[0]));
     }
 
-    // AGENDAMENTOS - deletar
     if (req.method === 'DELETE' && pathname.startsWith('/api/agendamentos/')) {
       const id = pathname.split('/').filter(Boolean).at(-1);
       if (!id) return sendJson(res, 400, { mensagem: 'ID do agendamento obrigatório.' });
