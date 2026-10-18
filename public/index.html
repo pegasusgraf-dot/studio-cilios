@@ -1,165 +1,84 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Studio Cílios</title>
-    <style>
-      body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #fff8f9;
-        color: #1f1f1f;
-      }
-      button, input, select { font: inherit; }
-      .app-shell { max-width: 1200px; margin: 0 auto; padding: 24px; }
-      .auth-screen, .app-screen { display: block; }
-      .hidden { display: none !important; }
-      .panel { background: white; border-radius: 18px; padding: 24px; box-shadow: 0 10px 35px rgba(0,0,0,0.08); }
-      .auth-box { max-width: 420px; margin: 80px auto; }
-      .auth-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
-      .auth-toggle button, .main-nav button { cursor: pointer; }
-      .form-grid { display: grid; gap: 12px; }
-      input, select { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #d9d9d9; border-radius: 10px; }
-      .primary-btn { background: #d14a7d; color: white; border: none; padding: 12px 18px; border-radius: 12px; cursor: pointer; }
-      .secondary-btn { background: #f4f4f4; color: #000; border: none; padding: 10px 14px; border-radius: 10px; }
-      .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-      .account-card { display: flex; align-items: center; gap: 12px; }
-      .avatar { width: 44px; height: 44px; border-radius: 50%; background: #d14a7d; display: grid; place-items: center; color: white; font-weight: bold; }
-      .nav { display: flex; gap: 10px; margin-bottom: 24px; }
-      .view-panel { display: none; }
-      .view-panel.is-visible { display: block; }
-      .stats { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 16px; margin-bottom: 20px; }
-      .stat-card { background: white; border: 1px solid #f0f0f0; border-radius: 14px; padding: 16px; }
-      .reservation-item { display: flex; gap: 12px; align-items: center; border: 1px solid #f0f0f0; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
-      .date-tile { background: #fef1f5; border-radius: 12px; width: 58px; min-width: 58px; text-align: center; padding: 8px 0; }
-      .date-tile strong { display: block; font-size: 22px; }
-      .reservation-main { flex: 1; }
-      .management-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px; border: 1px solid #f0f0f0; border-radius: 12px; margin-bottom: 10px; }
-      .row-delete, .cancel-button { background: #f9d4dd; border: none; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; }
-      .toast { position: fixed; bottom: 24px; right: 24px; background: #1f1f1f; color: white; padding: 12px 18px; border-radius: 12px; opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }
-      .toast.is-visible { opacity: 1; }
-      .error { color: #b42318; }
-      .success { color: #027a48; }
-      .inline-message { margin-top: 8px; }
-      .muted { color: #666; }
-      .stack { display: grid; gap: 16px; }
-      @media (max-width: 700px) { .stats { grid-template-columns: 1fr; } }
-    </style>
-  </head>
-  <body>
-    <div class="app-shell">
-      <section id="auth-screen" class="auth-screen">
-        <div class="panel auth-box">
-          <div class="auth-toggle">
-            <button type="button" class="secondary-btn is-active" data-auth-mode="login">Login</button>
-            <button type="button" class="secondary-btn" data-auth-mode="register">Cadastro</button>
-          </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Studio Cílios</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #fff7fb; color: #2d2d2d; margin: 0; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    h1,h2,h3 { margin-top: 0; }
+    form { display: grid; gap: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    input, button, select { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #e1d5dc; font-size: 14px; }
+    button { background: #d94f9a; color: white; border: none; cursor: pointer; font-weight: 700; }
+    button.secondary { background: #f2c5d9; color: #3f1f2e; }
+    .status { margin-top: 10px; min-height: 24px; font-size: 14px; color: #6b2d58; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #eee; padding: 10px 8px; text-align: left; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Studio Cílios</h1>
 
-          <div class="auth-copy">
-            <p id="auth-eyebrow" class="muted">BEM-VINDA AO STUDIO</p>
-            <h1 id="auth-title">Acesse sua conta</h1>
-            <p id="auth-description">Entre para consultar sua agenda ou marcar um procedimento.</p>
-          </div>
-
-          <form id="auth-form" class="form-grid">
-            <div id="name-field" hidden>
-              <input type="text" name="nome" placeholder="Nome completo" />
-            </div>
-            <input type="email" name="email" placeholder="E-mail" required />
-            <input type="password" name="senha" placeholder="Senha" required />
-            <button id="auth-submit" class="primary-btn" type="submit">Entrar <span aria-hidden="true">↗</span></button>
-          </form>
-
-          <div id="auth-message" class="inline-message muted"></div>
+    <div class="panel">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <div class="grid">
+          <input type="email" id="loginEmail" placeholder="E-mail" required />
+          <input type="password" id="loginSenha" placeholder="Senha" required />
         </div>
-      </section>
-
-      <section id="app-screen" class="app-screen hidden">
-        <header class="topbar">
-          <div>
-            <p class="muted">Agenda do Studio</p>
-            <h2 id="today-label">Hoje</h2>
-          </div>
-          <div class="account-card">
-            <div id="account-avatar" class="avatar">S</div>
-            <div>
-              <strong id="account-name">Studio</strong>
-              <div id="account-role" class="muted">Cliente</div>
-            </div>
-            <button id="logout-button" class="secondary-btn" type="button">Sair</button>
-          </div>
-        </header>
-
-        <nav class="nav main-nav">
-          <button type="button" class="secondary-btn is-active" data-view="home">Home</button>
-          <button type="button" class="secondary-btn" data-view="calendar">Agenda</button>
-          <button type="button" class="secondary-btn admin-only" data-view="services">Serviços</button>
-        </nav>
-
-        <div id="home-view" class="view-panel is-visible">
-          <div class="stats">
-            <div class="stat-card">
-              <div class="muted">Serviços</div>
-              <strong id="stat-services">0</strong>
-            </div>
-            <div class="stat-card">
-              <div class="muted">Meus horários</div>
-              <strong id="stat-mine">0</strong>
-            </div>
-            <div class="stat-card">
-              <div class="muted">Próximo</div>
-              <strong id="stat-next">—</strong>
-              <div id="stat-next-detail" class="muted">Nenhum agendamento futuro</div>
-            </div>
-          </div>
-
-          <div class="stack">
-            <div class="panel">
-              <h3>Novo agendamento</h3>
-              <form id="appointment-form" class="form-grid">
-                <select id="service-select" name="servico_id" required>
-                  <option value="">Selecione um procedimento</option>
-                </select>
-                <input type="datetime-local" name="data_hora" required />
-                <button type="submit" class="primary-btn">Agendar</button>
-              </form>
-              <div id="appointment-message" class="inline-message muted"></div>
-            </div>
-          </div>
-        </div>
-
-        <div id="calendar-view" class="view-panel">
-          <div class="panel">
-            <h3>Agenda</h3>
-            <div class="form-grid">
-              <select id="appointment-filter">
-                <option value="todos">Todos</option>
-              </select>
-            </div>
-            <div id="appointment-list" class="stack" style="margin-top: 18px;"></div>
-            <div id="empty-state" class="muted" hidden>Nenhum agendamento encontrado.</div>
-          </div>
-        </div>
-
-        <div id="services-view" class="view-panel admin-only">
-          <div class="panel">
-            <h3>Gerenciar serviços</h3>
-            <form id="service-form" class="form-grid">
-              <input type="text" name="nome" placeholder="Nome do serviço" required />
-              <input type="number" step="0.01" min="0" name="valor" placeholder="Valor (R$)" required />
-              <input type="number" min="1" name="duracao_minutos" placeholder="Duração em minutos" required />
-              <button type="submit" class="primary-btn">Salvar serviço</button>
-            </form>
-            <div id="service-message" class="inline-message muted"></div>
-            <div id="service-list" style="margin-top: 18px;"></div>
-          </div>
-        </div>
-      </section>
+        <button type="submit">Entrar</button>
+      </form>
+      <div id="loginStatus" class="status"></div>
     </div>
 
-    <div id="toast" class="toast" aria-live="polite"></div>
+    <div class="panel">
+      <h2>Cadastro</h2>
+      <form id="cadastroForm">
+        <div class="grid">
+          <input type="text" id="cadastroNome" placeholder="Nome" required />
+          <input type="email" id="cadastroEmail" placeholder="E-mail" required />
+          <input type="password" id="cadastroSenha" placeholder="Senha" required />
+        </div>
+        <button type="submit">Cadastrar</button>
+      </form>
+      <div id="cadastroStatus" class="status"></div>
+    </div>
 
-    <script src="/app.js"></script>
-  </body>
+    <div class="panel">
+      <h2>Serviços</h2>
+      <form id="servicoForm">
+        <div class="grid">
+          <input type="text" id="servicoNome" placeholder="Nome do serviço" required />
+          <input type="number" step="0.01" id="servicoValor" placeholder="Valor" required />
+          <input type="number" id="servicoDuracao" placeholder="Duração em minutos" required />
+        </div>
+        <button type="submit">Salvar serviço</button>
+      </form>
+      <div id="servicoStatus" class="status"></div>
+      <div id="servicosList"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Agendamentos</h2>
+      <form id="agendamentoForm">
+        <div class="grid">
+          <input type="text" id="agendamentoData" placeholder="Data e hora (ex.: 2026-12-05T15:30)" required />
+          <select id="agendamentoServico"></select>
+          <input type="text" id="agendamentoUsuario" placeholder="Usuário ID (opcional)" />
+        </div>
+        <button type="submit">Criar agendamento</button>
+      </form>
+      <div id="agendamentoStatus" class="status"></div>
+      <div id="agendamentosList"></div>
+    </div>
+  </div>
+
+  <script src="/public/app.js"></script>
+</body>
 </html>
