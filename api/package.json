@@ -1,8 +1,14 @@
 {
-  "name": "agendador-cilhos",
+  "name": "agendador-cilios",
   "version": "1.0.0",
-  "description": "Sistema de agendamento para studio de cílios",
+  "description": "Sistema de agendamento para studio de cílios com Supabase e Vercel",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
     "express": "^4.19.2"
   }
 }
