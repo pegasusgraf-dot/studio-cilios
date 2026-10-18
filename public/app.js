@@ -1,16 +1,12 @@
-// public/app.js
-// Front-end logic connecting public/index.html with /api endpoints
-
 document.addEventListener('DOMContentLoaded', () => {
-  let currentUser = null;
   const apiBase = '/api';
-  const toastEl = document.getElementById('toast');
 
-  const showToast = (msg, timeout = 3000) => {
-    if (!toastEl) return;
-    toastEl.textContent = msg;
-    toastEl.classList.add('is-visible');
-    setTimeout(() => toastEl.classList.remove('is-visible'), timeout);
+  const setStatus = (id, message, isError = false) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove('error');
+    if (isError) el.classList.add('error');
   };
 
   const apiFetch = async (path, options = {}) => {
@@ -18,210 +14,196 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     });
+
     let data = {};
-    try { data = await res.json(); } catch (e) { data = {}; }
-    if (!res.ok) throw new Error(data.mensagem || data.error || 'Erro na requisição');
+    try {
+      data = await res.json();
+    } catch (error) {
+      data = {};
+    }
+
+    if (!res.ok) {
+      throw new Error(data.mensagem || data.error || 'Erro na requisição');
+    }
+
     return data;
   };
 
-  // Elements
-  const authScreen = document.getElementById('auth-screen');
-  const appScreen = document.getElementById('app-screen');
-  const authForm = document.getElementById('auth-form');
-  const authToggleButtons = Array.from(document.querySelectorAll('[data-auth-mode]'));
-  const authMessage = document.getElementById('auth-message');
-  const accountName = document.getElementById('account-name');
-  const accountRole = document.getElementById('account-role');
-  const accountAvatar = document.getElementById('account-avatar');
-  const logoutButton = document.getElementById('logout-button');
-  const navButtons = Array.from(document.querySelectorAll('.main-nav [data-view]'));
-  const viewPanels = Array.from(document.querySelectorAll('.view-panel'));
+  const renderServices = async () => {
+    const listEl = document.getElementById('servicosList');
+    const selectEl = document.getElementById('agendamentoServico');
 
-  let authMode = 'login';
-
-  authToggleButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      authToggleButtons.forEach(b => b.classList.remove('is-active'));
-      btn.classList.add('is-active');
-      authMode = btn.dataset.authMode;
-      document.getElementById('name-field').hidden = authMode !== 'register';
-      document.getElementById('auth-title').textContent = authMode === 'register' ? 'Crie sua conta' : 'Acesse sua conta';
-      document.getElementById('auth-submit').textContent = authMode === 'register' ? 'Cadastrar' : 'Entrar ↗';
-    });
-  });
-
-  authForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    authMessage.textContent = '';
-    const form = new FormData(authForm);
-    const nome = form.get('nome');
-    const email = form.get('email');
-    const senha = form.get('senha');
-    try {
-      if (authMode === 'register') {
-        await apiFetch('/cadastro', { method: 'POST', body: JSON.stringify({ nome, email, senha }) });
-        authMessage.textContent = 'Cadastro realizado. Faça login.';
-        showToast('Cadastro realizado.');
-        document.querySelector('[data-auth-mode="login"]').click();
-      } else {
-        const result = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
-        currentUser = result.usuario;
-        showApp();
-        showToast(`Bem-vindo(a), ${currentUser.nome}`);
-      }
-    } catch (err) {
-      authMessage.textContent = err.message || String(err);
-      authMessage.classList.add('error');
-    }
-  });
-
-  const showApp = async () => {
-    authScreen.classList.add('hidden');
-    appScreen.classList.remove('hidden');
-    accountName.textContent = currentUser.nome || 'Usuário';
-    accountRole.textContent = currentUser.tipo || 'Cliente';
-    accountAvatar.textContent = (currentUser.nome || 'U').slice(0,1).toUpperCase();
-
-    const adminEls = Array.from(document.querySelectorAll('.admin-only'));
-    if (currentUser.tipo !== 'master') adminEls.forEach(el => el.classList.add('hidden'));
-    else adminEls.forEach(el => el.classList.remove('hidden'));
-
-    await loadServices();
-    await loadAppointments();
-  };
-
-  logoutButton.addEventListener('click', () => {
-    currentUser = null;
-    authScreen.classList.remove('hidden');
-    appScreen.classList.add('hidden');
-    showToast('Desconectado');
-  });
-
-  navButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      navButtons.forEach(b => b.classList.remove('is-active'));
-      btn.classList.add('is-active');
-      const view = btn.dataset.view;
-      viewPanels.forEach(p => p.classList.remove('is-visible'));
-      const el = document.getElementById(`${view}-view`);
-      if (el) el.classList.add('is-visible');
-    });
-  });
-
-  // Services
-  const serviceForm = document.getElementById('service-form');
-  const serviceMessage = document.getElementById('service-message');
-  const serviceList = document.getElementById('service-list');
-
-  if (serviceForm) {
-    serviceForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      serviceMessage.textContent = '';
-      const form = new FormData(serviceForm);
-      const nome = form.get('nome');
-      const valor = form.get('valor');
-      const duracao_minutos = form.get('duracao_minutos');
-      try {
-        await apiFetch('/servicos', { method: 'POST', body: JSON.stringify({ nome, valor, duracao_minutos }) });
-        serviceMessage.textContent = 'Serviço salvo.';
-        showToast('Serviço salvo');
-        serviceForm.reset();
-        await loadServices();
-      } catch (err) {
-        serviceMessage.textContent = err.message;
-        serviceMessage.classList.add('error');
-      }
-    });
-  }
-
-  const loadServices = async () => {
     try {
       const servicos = await apiFetch('/servicos');
-      const select = document.getElementById('service-select');
-      if (select) {
-        select.innerHTML = '<option value="">Selecione um procedimento</option>';
-        servicos.forEach(s => {
-          const o = document.createElement('option');
-          o.value = s.id; o.textContent = `${s.nome} — R$ ${Number(s.valor).toFixed(2)}`;
-          select.appendChild(o);
+
+      if (selectEl) {
+        selectEl.innerHTML = '<option value="">Selecione um serviço</option>';
+        servicos.forEach((servico) => {
+          const option = document.createElement('option');
+          option.value = servico.id;
+          option.textContent = `${servico.nome} — R$ ${Number(servico.valor).toFixed(2)}`;
+          selectEl.appendChild(option);
         });
       }
-      if (serviceList) {
-        serviceList.innerHTML = '';
-        servicos.forEach(s => {
-          const el = document.createElement('div');
-          el.className = 'management-row';
-          el.innerHTML = `<div><strong>${s.nome}</strong><div class="muted">R$ ${Number(s.valor).toFixed(2)} • ${s.duracao_minutos} min</div></div>`;
-          serviceList.appendChild(el);
+
+      if (listEl) {
+        listEl.innerHTML = '';
+
+        if (!servicos.length) {
+          listEl.innerHTML = '<p>Nenhum serviço cadastrado.</p>';
+          return;
+        }
+
+        servicos.forEach((servico) => {
+          const row = document.createElement('div');
+          row.style.border = '1px solid #eee';
+          row.style.borderRadius = '10px';
+          row.style.padding = '10px';
+          row.style.marginTop = '10px';
+          row.innerHTML = `
+            <strong>${servico.nome}</strong><br>
+            <span>Valor: R$ ${Number(servico.valor).toFixed(2)}</span><br>
+            <span>Duração: ${servico.duracao_minutos} min</span>
+          `;
+          listEl.appendChild(row);
         });
       }
-      const stat = document.getElementById('stat-services');
-      if (stat) stat.textContent = servicos.length;
-    } catch (err) {
-      console.error('loadServices', err);
+    } catch (error) {
+      console.error('Erro ao carregar serviços:', error);
+      if (listEl) listEl.innerHTML = '<p>Não foi possível carregar os serviços.</p>';
     }
   };
 
-  // Appointments
-  const appointmentForm = document.getElementById('appointment-form');
-  const appointmentMessage = document.getElementById('appointment-message');
-  const appointmentList = document.getElementById('appointment-list');
+  const renderAppointments = async () => {
+    const listEl = document.getElementById('agendamentosList');
 
-  if (appointmentForm) {
-    appointmentForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      appointmentMessage.textContent = '';
-      const form = new FormData(appointmentForm);
-      const servico_id = form.get('servico_id');
-      const data_hora = form.get('data_hora');
-      if (!servico_id || !data_hora) { appointmentMessage.textContent = 'Preencha todos os campos.'; return; }
+    try {
+      const agendamentos = await apiFetch('/agendamentos');
+
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      if (!agendamentos.length) {
+        listEl.innerHTML = '<p>Nenhum agendamento cadastrado.</p>';
+        return;
+      }
+
+      agendamentos.forEach((agendamento) => {
+        const row = document.createElement('div');
+        row.style.border = '1px solid #eee';
+        row.style.borderRadius = '10px';
+        row.style.padding = '10px';
+        row.style.marginTop = '10px';
+        row.innerHTML = `
+          <strong>${agendamento.servico_nome || 'Procedimento'}</strong><br>
+          <span>Data: ${new Date(agendamento.data_hora).toLocaleString('pt-BR')}</span><br>
+          <span>Valor: R$ ${Number(agendamento.valor || 0).toFixed(2)}</span>
+        `;
+        listEl.appendChild(row);
+      });
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos:', error);
+      if (listEl) listEl.innerHTML = '<p>Não foi possível carregar os agendamentos.</p>';
+    }
+  };
+
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(loginForm);
+      const email = String(formData.get('email') || '').trim();
+      const senha = String(formData.get('senha') || '').trim();
+
       try {
-        const iso = new Date(data_hora).toISOString();
-        await apiFetch('/agendamentos', { method: 'POST', body: JSON.stringify({ servico_id, data_hora: iso, usuario_id: currentUser?.id || null }) });
-        appointmentForm.reset();
-        showToast('Agendamento criado');
-        await loadAppointments();
-      } catch (err) {
-        appointmentMessage.textContent = err.message;
-        appointmentMessage.classList.add('error');
+        const result = await apiFetch('/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, senha }),
+        });
+
+        setStatus('loginStatus', `Login realizado com sucesso! Bem-vindo(a), ${result.usuario?.nome || 'usuário'}.`);
+        loginForm.reset();
+      } catch (error) {
+        setStatus('loginStatus', error.message || 'Erro ao fazer login.', true);
       }
     });
   }
 
-  const loadAppointments = async () => {
-    try {
-      const agendamentos = await apiFetch('/agendamentos');
-      appointmentList.innerHTML = '';
-      if (!agendamentos.length) {
-        document.getElementById('empty-state').hidden = false;
+  const cadastroForm = document.getElementById('cadastroForm');
+  if (cadastroForm) {
+    cadastroForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(cadastroForm);
+      const nome = String(formData.get('nome') || '').trim();
+      const email = String(formData.get('email') || '').trim();
+      const senha = String(formData.get('senha') || '').trim();
+
+      try {
+        await apiFetch('/cadastro', {
+          method: 'POST',
+          body: JSON.stringify({ nome, email, senha }),
+        });
+
+        setStatus('cadastroStatus', 'Cadastro realizado com sucesso! Agora faça login.', false);
+        cadastroForm.reset();
+      } catch (error) {
+        setStatus('cadastroStatus', error.message || 'Erro ao cadastrar.', true);
+      }
+    });
+  }
+
+  const servicoForm = document.getElementById('servicoForm');
+  if (servicoForm) {
+    servicoForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(servicoForm);
+      const nome = String(formData.get('nome') || '').trim();
+      const valor = Number(formData.get('valor') || 0);
+      const duracao_minutos = Number(formData.get('duracao_minutos') || 0);
+
+      try {
+        await apiFetch('/servicos', {
+          method: 'POST',
+          body: JSON.stringify({ nome, valor, duracao_minutos }),
+        });
+
+        setStatus('servicoStatus', 'Serviço salvo com sucesso!', false);
+        servicoForm.reset();
+        await renderServices();
+      } catch (error) {
+        setStatus('servicoStatus', error.message || 'Erro ao salvar serviço.', true);
+      }
+    });
+  }
+
+  const agendamentoForm = document.getElementById('agendamentoForm');
+  if (agendamentoForm) {
+    agendamentoForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(agendamentoForm);
+      const servico_id = formData.get('servico') || '';
+      const data_hora = String(formData.get('data_hora') || '').trim();
+
+      if (!servico_id || !data_hora) {
+        setStatus('agendamentoStatus', 'Selecione um serviço e informe a data/hora.', true);
         return;
       }
-      document.getElementById('empty-state').hidden = true;
-      agendamentos.forEach(a => {
-        const div = document.createElement('div');
-        div.className = 'reservation-item';
-        const date = new Date(a.data_hora);
-        div.innerHTML = `
-          <div class="date-tile"><strong>${('0'+date.getDate()).slice(-2)}</strong><small class="muted">${date.toLocaleDateString()}</small></div>
-          <div class="reservation-main">
-            <div><strong>${a.servico_nome}</strong></div>
-            <div class="muted">${a.usuario_nome || 'Cliente'} — ${date.toLocaleString()}</div>
-          </div>
-        `;
-        appointmentList.appendChild(div);
-      });
-      document.getElementById('stat-mine').textContent = agendamentos.filter(a => a.usuario_id === currentUser?.id).length || 0;
-      const next = agendamentos.find(a => new Date(a.data_hora) > new Date());
-      document.getElementById('stat-next').textContent = next ? new Date(next.data_hora).toLocaleString() : '—';
-      document.getElementById('stat-next-detail').textContent = next ? `${next.servico_nome} • ${next.usuario_nome || 'Cliente'}` : 'Nenhum agendamento futuro';
-    } catch (err) {
-      console.error('loadAppointments', err);
-    }
-  };
 
-  (async () => {
-    authScreen.classList.remove('hidden');
-    appScreen.classList.add('hidden');
-    try { await loadServices(); } catch (e) { /* ok */ }
-  })();
+      try {
+        await apiFetch('/agendamentos', {
+          method: 'POST',
+          body: JSON.stringify({ servico_id, data_hora, usuario_id: null }),
+        });
+
+        setStatus('agendamentoStatus', 'Agendamento criado com sucesso!', false);
+        agendamentoForm.reset();
+        await renderAppointments();
+      } catch (error) {
+        setStatus('agendamentoStatus', error.message || 'Erro ao criar agendamento.', true);
+      }
+    });
+  }
+
+  renderServices();
+  renderAppointments();
 });
