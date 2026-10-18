@@ -1,0 +1,2 @@
+// Remove legacy api/index.json entry to avoid Vercel conflicting file paths.
+module.exports = true;
