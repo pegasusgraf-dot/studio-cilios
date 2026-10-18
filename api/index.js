@@ -1,165 +1,249 @@
-// Simplified serverless API to be used by Vercel; this file uses Supabase server-side keys via env vars
-const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
 
-const app = express();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
 
-app.use(express.json());
-app.use((req, res, next) => {
+const sendJson = (res, status, payload = {}) => {
+  res.statusCode = status;
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-});
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.warn('SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY devem ser definidos no ambiente do Vercel.');
-}
-
-const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder-key', {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-});
-
-const makeId = () => `id-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
-
-const normalizeUser = (usuario) => ({ id: usuario.id, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo || 'cliente' });
-const normalizeService = (servico) => ({ id: servico.id, nome: servico.nome, valor: Number(servico.valor || 0), duracao_minutos: Number(servico.duracao_minutos || 0) });
-const normalizeAppointment = (agendamento) => ({ id: agendamento.id, servico_id: agendamento.servico_id, servico_nome: agendamento.servico_nome || agendamento.services?.nome || 'Procedimento', valor: Number(agendamento.valor || agendamento.services?.valor || 0), usuario_id: agendamento.usuario_id, usuario_nome: agendamento.usuario_nome || agendamento.users?.nome || 'Cliente', data_hora: agendamento.data_hora });
-
-const getTable = async (tableName, filters = []) => {
-  let query = supabase.from(tableName).select('*');
-  for (const [field, value] of filters) query = query.eq(field, value);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(payload));
 };
 
-app.get('/api/health', (req, res) => res.json({ ok: true, message: 'Supabase backend ok.' }));
-
-app.post('/api/login', async (req, res) => {
-  try {
-    const { email, senha } = req.body || {};
-    if (!email || !senha) return res.status(400).json({ mensagem: 'E-mail e senha são obrigatórios.' });
-    const normalizedEmail = String(email).trim().toLowerCase();
-    const usuarios = await getTable('users', [['email', normalizedEmail]]);
-    const usuario = usuarios.find((item) => item.senha === String(senha));
-    if (!usuario) return res.status(401).json({ mensagem: 'E-mail ou senha incorretos.' });
-    return res.json({ usuario: normalizeUser(usuario) });
-  } catch (error) {
-    console.error('Erro em /api/login:', error);
-    return res.status(500).json({ mensagem: 'Não foi possível fazer login.' });
+const parseBody = async (req) => {
+  if (!req.body && req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const raw = Buffer.concat(chunks).toString('utf8');
+    try {
+      return JSON.parse(raw || '{}');
+    } catch (error) {
+      return {};
+    }
   }
+
+  return req.body || {};
+};
+
+const makeId = () => `id_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+
+const normalizeUser = (usuario) => ({
+  id: usuario.id,
+  nome: usuario.nome,
+  email: usuario.email,
+  tipo: usuario.tipo || 'cliente',
 });
 
-app.post('/api/cadastro', async (req, res) => {
-  try {
-    const { nome, email, senha } = req.body || {};
-    if (!nome || !email || !senha) return res.status(400).json({ mensagem: 'Nome, e-mail e senha são obrigatórios.' });
-    const normalizedEmail = String(email).trim().toLowerCase();
-    const usuariosExistentes = await getTable('users', [['email', normalizedEmail]]);
-    if (usuariosExistentes.length > 0) return res.status(400).json({ mensagem: 'Este e-mail já está cadastrado.' });
-    const novoUsuario = { id: makeId(), nome: String(nome).trim(), email: normalizedEmail, senha: String(senha), tipo: 'cliente' };
-    const { data, error } = await supabase.from('users').insert([novoUsuario]).select().single();
-    if (error) throw error;
-    return res.status(201).json({ mensagem: 'Cadastrado com sucesso!', usuario: normalizeUser(data) });
-  } catch (error) {
-    console.error('Erro em /api/cadastro:', error);
-    return res.status(500).json({ mensagem: 'Não foi possível concluir o cadastro.' });
-  }
+const normalizeService = (servico) => ({
+  id: servico.id,
+  nome: servico.nome,
+  valor: Number(servico.valor || 0),
+  duracao_minutos: Number(servico.duracao_minutos || 0),
 });
 
-app.get('/api/servicos', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: true });
-    if (error) throw error;
-    return res.json((data || []).map(normalizeService));
-  } catch (error) {
-    console.error('Erro em /api/servicos:', error);
-    return res.status(500).json({ mensagem: 'Não foi possível carregar os serviços.' });
-  }
+const normalizeAppointment = (agendamento) => ({
+  id: agendamento.id,
+  servico_id: agendamento.servico_id,
+  servico_nome: agendamento.servico_nome || 'Procedimento',
+  valor: Number(agendamento.valor || 0),
+  data_hora: agendamento.data_hora,
+  usuario_id: agendamento.usuario_id,
+  usuario_nome: agendamento.usuario_nome || null,
 });
 
-app.post('/api/servicos', async (req, res) => {
+module.exports = async (req, res) => {
   try {
-    const { nome, valor, duracao_minutos } = req.body || {};
-    if (!nome || valor === undefined || duracao_minutos === undefined) return res.status(400).json({ mensagem: 'Nome, valor e duração são obrigatórios.' });
-    const novoServico = { id: makeId(), nome: String(nome).trim(), valor: Number(valor), duracao_minutos: Number(duracao_minutos) };
-    const { data, error } = await supabase.from('services').insert([novoServico]).select().single();
-    if (error) throw error;
-    return res.status(201).json(normalizeService(data));
-  } catch (error) {
-    console.error('Erro ao criar serviço:', error);
-    return res.status(500).json({ mensagem: 'Não foi possível cadastrar o serviço.' });
-  }
-});
+    if (req.method === 'OPTIONS') {
+      return sendJson(res, 204, {});
+    }
 
-app.delete('/api/servicos/:id', async (req, res) => {
-  try {
-    const { error } = await supabase.from('services').delete().eq('id', req.params.id);
-    if (error) throw error;
-    return res.status(204).send();
-  } catch (error) {
-    console.error('Erro ao deletar serviço:', error);
-    return res.status(500).json({ mensagem: 'Não foi possível excluir o serviço.' });
-  }
-});
+    const pathname = new URL(req.url || '/', 'http://localhost').pathname;
 
-app.get('/api/agendamentos', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('appointments').select('*').order('data_hora', { ascending: true });
-    if (error) throw error;
-    const serviceIds = [...new Set((data || []).map((item) => item.servico_id).filter(Boolean))];
-    const userIds = [...new Set((data || []).map((item) => item.usuario_id).filter(Boolean))];
-    const [servicosResult, usuariosResult] = await Promise.all([
-      serviceIds.length ? supabase.from('services').select('*').in('id', serviceIds) : Promise.resolve({ data: [] }),
-      userIds.length ? supabase.from('users').select('*').in('id', userIds) : Promise.resolve({ data: [] }),
-    ]);
-    const servicosMap = new Map((servicosResult.data || []).map((item) => [item.id, item]));
-    const usuariosMap = new Map((usuariosResult.data || []).map((item) => [item.id, item]));
-    const result = (data || []).map((agendamento) => {
-      const servico = servicosMap.get(agendamento.servico_id) || {};
-      const usuario = usuariosMap.get(agendamento.usuario_id) || {};
-      return normalizeAppointment({ ...agendamento, servico_nome: servico.nome || agendamento.servico_nome || 'Procedimento', valor: agendamento.valor ?? servico.valor ?? 0, usuario_nome: usuario.nome || agendamento.usuario_nome || 'Cliente' });
-    });
-    return res.json(result);
-  } catch (error) {
-    console.error('Erro em /api/agendamentos:', error);
-    return res.status(500).json({ mensagem: 'Não foi possível carregar os agendamentos.' });
-  }
-});
+    if (!process.env.DATABASE_URL) {
+      if (req.method === 'GET' && pathname === '/api/health') {
+        return sendJson(res, 200, { ok: false, message: 'DATABASE_URL não configurada.' });
+      }
+      return sendJson(res, 500, { mensagem: 'DATABASE_URL não configurada no ambiente da Vercel.' });
+    }
 
-app.post('/api/agendamentos', async (req, res) => {
-  try {
-    const { servico_id, data_hora, usuario_id } = req.body || {};
-    if (!servico_id || !data_hora) return res.status(400).json({ mensagem: 'Serviço e data/hora são obrigatórios.' });
-    const { data: servicoData, error: servicoError } = await supabase.from('services').select('*').eq('id', String(servico_id)).maybeSingle();
-    if (servicoError) throw servicoError;
-    if (!servicoData) return res.status(400).json({ mensagem: 'Serviço inválido.' });
-    const resolvedUsuarioId = usuario_id || 'cliente-default';
-    const { data: usuarioData } = await supabase.from('users').select('*').eq('id', String(resolvedUsuarioId)).maybeSingle();
-    const novoAgendamento = { id: makeId(), servico_id: String(servico_id), servico_nome: servicoData.nome, valor: Number(servicoData.valor || 0), usuario_id: resolvedUsuarioId, usuario_nome: usuarioData?.nome || 'Cliente', data_hora: new Date(data_hora).toISOString() };
-    const { data, error } = await supabase.from('appointments').insert([novoAgendamento]).select().single();
-    if (error) throw error;
-    return res.status(201).json(normalizeAppointment(data));
-  } catch (error) {
-    console.error('Erro ao criar agendamento:', error);
-    return res.status(500).json({ mensagem: 'Não foi possível criar o agendamento.' });
-  }
-});
+    if (req.method === 'GET' && pathname === '/api/health') {
+      return sendJson(res, 200, { ok: true, message: 'PostgreSQL backend ok.', database: 'configured' });
+    }
 
-app.delete('/api/agendamentos/:id', async (req, res) => {
-  try {
-    const { error } = await supabase.from('appointments').delete().eq('id', req.params.id);
-    if (error) throw error;
-    return res.status(204).send();
-  } catch (error) {
-    console.error('Erro ao excluir agendamento:', error);
-    return res.status(500).json({ mensagem: 'Não foi possível cancelar o agendamento.' });
-  }
-});
+    if (req.method === 'POST' && pathname === '/api/login') {
+      const body = await parseBody(req);
+      const { email, senha } = body || {};
 
-module.exports = app;
+      if (!email || !senha) {
+        return sendJson(res, 400, { mensagem: 'E-mail e senha são obrigatórios.' });
+      }
+
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const { rows } = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [normalizedEmail]);
+      const usuario = rows[0];
+
+      if (!usuario || String(usuario.senha) !== String(senha)) {
+        return sendJson(res, 401, { mensagem: 'E-mail ou senha incorretos.' });
+      }
+
+      return sendJson(res, 200, { usuario: normalizeUser(usuario) });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/cadastro') {
+      const body = await parseBody(req);
+      const { nome, email, senha } = body || {};
+
+      if (!nome || !email || !senha) {
+        return sendJson(res, 400, { mensagem: 'Nome, e-mail e senha são obrigatórios.' });
+      }
+
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const { rows: usuariosExistentes } = await pool.query(
+        'SELECT id FROM users WHERE email = $1 LIMIT 1',
+        [normalizedEmail]
+      );
+
+      if (usuariosExistentes.length > 0) {
+        return sendJson(res, 400, { mensagem: 'Este e-mail já está cadastrado.' });
+      }
+
+      const novoUsuario = {
+        id: makeId(),
+        nome: String(nome).trim(),
+        email: normalizedEmail,
+        senha: String(senha),
+        tipo: 'cliente',
+      };
+
+      const { rows } = await pool.query(
+        'INSERT INTO users (id, nome, email, senha, tipo) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [novoUsuario.id, novoUsuario.nome, novoUsuario.email, novoUsuario.senha, novoUsuario.tipo]
+      );
+
+      return sendJson(res, 201, { mensagem: 'Cadastrado com sucesso!', usuario: normalizeUser(rows[0]) });
+    }
+
+    if (req.method === 'GET' && pathname === '/api/servicos') {
+      const { rows } = await pool.query('SELECT * FROM services ORDER BY created_at ASC NULLS LAST');
+      return sendJson(res, 200, rows.map(normalizeService));
+    }
+
+    if (req.method === 'POST' && pathname === '/api/servicos') {
+      const body = await parseBody(req);
+      const { nome, valor, duracao_minutos } = body || {};
+
+      if (!nome || valor === undefined || duracao_minutos === undefined) {
+        return sendJson(res, 400, { mensagem: 'Nome, valor e duração são obrigatórios.' });
+      }
+
+      const novoServico = {
+        id: makeId(),
+        nome: String(nome).trim(),
+        valor: Number(valor),
+        duracao_minutos: Number(duracao_minutos),
+      };
+
+      const { rows } = await pool.query(
+        'INSERT INTO services (id, nome, valor, duracao_minutos) VALUES ($1, $2, $3, $4) RETURNING *',
+        [novoServico.id, novoServico.nome, novoServico.valor, novoServico.duracao_minutos]
+      );
+
+      return sendJson(res, 201, normalizeService(rows[0]));
+    }
+
+    if (req.method === 'DELETE' && pathname.startsWith('/api/servicos/')) {
+      const id = pathname.split('/').filter(Boolean).at(-1);
+      if (!id) {
+        return sendJson(res, 400, { mensagem: 'ID do serviço obrigatório.' });
+      }
+
+      await pool.query('DELETE FROM services WHERE id = $1', [id]);
+      return sendJson(res, 204, {});
+    }
+
+    if (req.method === 'GET' && pathname === '/api/agendamentos') {
+      const { rows } = await pool.query(`
+        SELECT
+          a.*,
+          s.nome AS servico_nome,
+          s.valor AS servico_valor,
+          u.nome AS usuario_nome
+        FROM appointments a
+        LEFT JOIN services s ON s.id = a.servico_id
+        LEFT JOIN users u ON u.id = a.usuario_id
+        ORDER BY a.data_hora ASC NULLS LAST
+      `);
+
+      const result = rows.map((agendamento) => ({
+        id: agendamento.id,
+        servico_id: agendamento.servico_id,
+        servico_nome: agendamento.servico_nome || 'Procedimento',
+        valor: Number(agendamento.valor ?? agendamento.servico_valor ?? 0),
+        data_hora: agendamento.data_hora,
+        usuario_id: agendamento.usuario_id,
+        usuario_nome: agendamento.usuario_nome || null,
+      }));
+
+      return sendJson(res, 200, result);
+    }
+
+    if (req.method === 'POST' && pathname === '/api/agendamentos') {
+      const body = await parseBody(req);
+      const { servico_id, data_hora, usuario_id } = body || {};
+
+      if (!servico_id || !data_hora) {
+        return sendJson(res, 400, { mensagem: 'Serviço e data/hora são obrigatórios.' });
+      }
+
+      const { rows: servicoRows } = await pool.query('SELECT * FROM services WHERE id = $1 LIMIT 1', [String(servico_id)]);
+      if (!servicoRows[0]) {
+        return sendJson(res, 400, { mensagem: 'Serviço inválido.' });
+      }
+
+      const resolvedUsuarioId = usuario_id || null;
+      let usuario_nome = null;
+      if (resolvedUsuarioId) {
+        const { rows: usuarioRows } = await pool.query('SELECT nome FROM users WHERE id = $1 LIMIT 1', [String(resolvedUsuarioId)]);
+        usuario_nome = usuarioRows[0]?.nome || null;
+      }
+
+      const novoAgendamento = {
+        id: makeId(),
+        servico_id: String(servico_id),
+        servico_nome: servicoRows[0].nome,
+        valor: Number(servicoRows[0].valor || 0),
+        usuario_id: resolvedUsuarioId,
+        usuario_nome,
+        data_hora,
+      };
+
+      const { rows } = await pool.query(
+        'INSERT INTO appointments (id, servico_id, servico_nome, valor, usuario_id, usuario_nome, data_hora) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [novoAgendamento.id, novoAgendamento.servico_id, novoAgendamento.servico_nome, novoAgendamento.valor, novoAgendamento.usuario_id, novoAgendamento.usuario_nome, novoAgendamento.data_hora]
+      );
+
+      return sendJson(res, 201, normalizeAppointment(rows[0]));
+    }
+
+    if (req.method === 'DELETE' && pathname.startsWith('/api/agendamentos/')) {
+      const id = pathname.split('/').filter(Boolean).at(-1);
+      if (!id) {
+        return sendJson(res, 400, { mensagem: 'ID do agendamento obrigatório.' });
+      }
+
+      await pool.query('DELETE FROM appointments WHERE id = $1', [id]);
+      return sendJson(res, 204, {});
+    }
+
+    return sendJson(res, 404, { mensagem: 'Rota não encontrada.' });
+  } catch (error) {
+    console.error('Erro na API Vercel:', error);
+    return sendJson(res, 500, { mensagem: 'Não foi possível processar a requisição.' });
+  }
+};
