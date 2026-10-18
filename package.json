@@ -1,7 +1,16 @@
 {
-  "version": 2,
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/((?!api/).*)", "destination": "/public/$1" }
-  ]
+  "name": "studio-cilios",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Agendador Studio Cílios - API for Vercel (uses PostgreSQL via DATABASE_URL)",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.10.0"
+  }
 }
