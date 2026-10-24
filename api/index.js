@@ -18,7 +18,6 @@ const sendJson = (res, status, payload = {}) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
   if (status === 204) return res.end();
-
   res.end(JSON.stringify(payload));
 };
 
@@ -283,7 +282,7 @@ module.exports = async (req, res) => {
     if (req.method === 'DELETE' && pathname.startsWith('/api/agendamentos/')) {
       const id = pathname.split('/').filter(Boolean).at(-1);
       if (!id) {
-        return sendJson(res, 400, { mensagem: 'ID do agendamento obrigatório.' });
+        return sendJson(res, 400, { mensagem: 'ID do serviço obrigatório.' });
       }
 
       await pool.query('DELETE FROM appointments WHERE id = $1', [id]);
