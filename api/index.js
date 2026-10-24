@@ -1,10 +1,10 @@
 const { Pool } = require('pg');
 
+const isNeon = (process.env.DATABASE_URL || '').includes('neon.tech');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech')
-  ? { rejectUnauthorized: false }
-  : false,
+  ssl: isNeon ? { rejectUnauthorized: false } : false,
 });
 
 const DEFAULT_MASTER_EMAIL = 'prodrigosilvacel@gmail.com.br';
@@ -78,7 +78,7 @@ const testDatabase = async () => {
 };
 
 const getMasterUser = () => ({
-  id: 'master_paulo',
+  id: 'paulo_master',
   nome: 'Paulo',
   email: DEFAULT_MASTER_EMAIL,
   senha: DEFAULT_MASTER_PASSWORD,
@@ -124,13 +124,21 @@ module.exports = async (req, res) => {
       }
 
       const normalizedEmail = String(email).trim().toLowerCase();
-      const passwordMatch = String(senha) === String(DEFAULT_MASTER_PASSWORD);
 
-      if (normalizedEmail === DEFAULT_MASTER_EMAIL && passwordMatch) {
-        return sendJson(res, 200, { usuario: normalizeUser(getMasterUser()) });
+      if (
+        normalizedEmail === String(DEFAULT_MASTER_EMAIL).trim().toLowerCase() &&
+        String(senha) === String(DEFAULT_MASTER_PASSWORD)
+      ) {
+        return sendJson(res, 200, {
+          usuario: normalizeUser(getMasterUser()),
+        });
       }
 
-      const { rows } = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [normalizedEmail]);
+      const { rows } = await pool.query(
+        'SELECT * FROM users WHERE email = $1 LIMIT 1',
+        [normalizedEmail]
+      );
+
       const user = rows[0];
       if (!user || String(user.senha) !== String(senha)) {
         return sendJson(res, 401, { mensagem: 'E-mail ou senha incorretos.' });
@@ -291,4 +299,3 @@ module.exports = async (req, res) => {
     });
   }
 };
-
