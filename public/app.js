@@ -69,7 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!res.ok) {
-      throw new Error(data.mensagem || data.error || 'Erro na requisição');
+      const message =
+        data?.mensagem ||
+        data?.error ||
+        data?.message ||
+        `Erro na requisição (${res.status})`;
+
+      console.error('apiFetch error:', {
+        path,
+        status: res.status,
+        response: data,
+      });
+
+      throw new Error(message);
     }
 
     return data;
@@ -127,9 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearSession = () => {
     currentUser = null;
     localStorage.removeItem(storageKey);
+
     if (accountName) accountName.textContent = 'Nome';
     if (accountRole) accountRole.textContent = 'Cliente';
     if (accountAvatar) accountAvatar.textContent = 'A';
+
     updateAdminVisibility();
   };
 
@@ -187,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Erro ao carregar serviços:', error);
       if (listEl) listEl.innerHTML = '<p>Não foi possível carregar os serviços.</p>';
       if (statServices) statServices.textContent = '0';
+      showToast(error.message || 'Erro ao carregar serviços', true);
     }
   };
 
@@ -199,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const appointments = await apiFetch('/agendamentos');
+
       const selectedFilter = appointmentFilter ? appointmentFilter.value : 'todos';
 
       let filtered = appointments;
@@ -255,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Erro ao carregar agendamentos:', error);
       if (listEl) listEl.innerHTML = '<p>Não foi possível carregar os agendamentos.</p>';
       if (statMine) statMine.textContent = '0';
+      showToast(error.message || 'Erro ao carregar agendamentos', true);
     }
   };
 
@@ -385,28 +402,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const boot = async () => {
     setAuthMode('login');
 
-    const savedUser = localStorage.getItem(storageKey);
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        if (parsed && parsed.id) {
-          currentUser = parsed;
-          fillAccount(currentUser);
-          updateAdminVisibility();
-          showApp();
-          await renderServices();
-          await renderAppointments();
-          return;
+    try {
+      const savedUser = localStorage.getItem(storageKey);
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          if (parsed && parsed.id) {
+            currentUser = parsed;
+            fillAccount(currentUser);
+            updateAdminVisibility();
+            showApp();
+            await renderServices();
+            await renderAppointments();
+            return;
+          }
+        } catch (error) {
+          console.warn('Sessão inválida:', error);
         }
-      } catch (error) {
-        console.warn('Sessão inválida:', error);
       }
-    }
 
-    clearSession();
-    showAuth();
-    await renderServices();
-    await renderAppointments();
+      clearSession();
+      showAuth();
+      await renderServices();
+      await renderAppointments();
+    } catch (error) {
+      console.error('Erro no bootstrap da UI:', error);
+    }
   };
 
   boot();
