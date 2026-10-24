@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const apiBase = '/api';
   const storageKey = 'studio-cilios-user';
+  const defaultMasterEmail = 'prodrigosilvacel@gmail.com.br';
+  const defaultMasterPassword = 'w18187';
 
   const authScreen = document.getElementById('auth-screen');
   const appScreen = document.getElementById('app-screen');
@@ -390,7 +392,13 @@ document.addEventListener('DOMContentLoaded', () => {
       clearSession();
       showAuth();
       setAuthMode('login');
-      if (authForm) authForm.reset();
+      if (authForm) {
+        authForm.reset();
+        const emailInput = authForm.querySelector('input[name="email"]');
+        const passwordInput = authForm.querySelector('input[name="senha"]');
+        if (emailInput) emailInput.value = defaultMasterEmail;
+        if (passwordInput) passwordInput.value = defaultMasterPassword;
+      }
       showToast('Sessão encerrada.');
     });
   }
@@ -401,6 +409,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const boot = async () => {
     setAuthMode('login');
+
+    if (authForm) {
+      const emailInput = authForm.querySelector('input[name="email"]');
+      const passwordInput = authForm.querySelector('input[name="senha"]');
+      if (emailInput) emailInput.value = defaultMasterEmail;
+      if (passwordInput) passwordInput.value = defaultMasterPassword;
+    }
 
     try {
       const savedUser = localStorage.getItem(storageKey);
@@ -425,6 +440,9 @@ document.addEventListener('DOMContentLoaded', () => {
       showAuth();
       await renderServices();
       await renderAppointments();
+      if (authForm) {
+        authForm.requestSubmit();
+      }
     } catch (error) {
       console.error('Erro no bootstrap da UI:', error);
     }
@@ -432,3 +450,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   boot();
 });
+
