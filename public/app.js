@@ -61,10 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const apiFetch = async (path, options = {}) => {
-    const res = await fetch(`${apiBase}${path}`, {
+    const mergedOptions = {
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       ...options,
-    });
+    };
+
+    const res = await fetch(`${apiBase}${path}`, mergedOptions);
 
     let data = {};
     try {
