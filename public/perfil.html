@@ -1,12 +1,27 @@
-// Exemplo simples em JavaScript para pegar o ID da URL e carregar os dados
-const urlParams = new URLSearchParams(window.location.search);
-const userId = urlParams.get('id');
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Perfil</title>
+</head>
+<body>
+  <h1 id="nome">Carregando...</h1>
+  <p id="cargo"></p>
+  <img id="foto" alt="Foto do usuário" width="120">
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('id');
 
-// Fazer uma requisição ao seu banco de dados para buscar as informações do usuário pelo ID
-fetch(`/api/usuarios/${userId}`)
-  .then(response => response.json())
-  .then(data => {
-    document.getElementById('nome').innerText = data.nome;
-    document.getElementById('cargo').innerText = data.cargo;
-    document.getElementById('foto').src = data.fotoUrl;
-  });
+    fetch(`/api/usuarios/${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        document.getElementById('nome').textContent = data.nome;
+        document.getElementById('cargo').textContent = data.cargo;
+        document.getElementById('foto').src = data.fotoUrl;
+      })
+      .catch(() => {
+        document.getElementById('nome').textContent = 'Usuário não encontrado';
+      });
+  </script>
+</body>
+</html>
