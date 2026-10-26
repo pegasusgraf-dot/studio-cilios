@@ -2,7 +2,7 @@
    "name": "studio-cilios",
   "version": "1.0.0",
   "private": true,
-  "description": "Agendador Studio Cílios 
+  "description": "Agendador Studio Cílios" 
   "main": "api/index.js",
   "scripts": {
     "start": "node server.js",
