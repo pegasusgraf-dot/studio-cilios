@@ -214,6 +214,25 @@ app.put('/api/servicos/:id', requireAuth, requireMaster, (req, res) => {
   res.json(service);
 });
 
+app.delete('/api/servicos/:id', requireAuth, requireMaster, (req, res) => {
+  const id = String(req.params.id || '').trim();
+
+  if (!id) {
+    return res.status(400).json({ mensagem: 'Selecione um serviço para remover.' });
+  }
+
+  const serviceIndex = state.services.findIndex((item) => String(item.id) === String(id));
+  if (serviceIndex === -1) {
+    return res.status(404).json({ mensagem: 'Serviço não encontrado.' });
+  }
+
+  const [removed] = state.services.splice(serviceIndex, 1);
+
+  state.appointments = state.appointments.filter((appointment) => String(appointment.servico_id) !== String(id));
+
+  res.json({ mensagem: 'Serviço removido com sucesso.', item: removed });
+});
+
 app.get('/api/agendamentos', requireAuth, (req, res) => {
   const user = req.session.user;
 
