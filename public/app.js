@@ -328,6 +328,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const appointments = await apiFetch('/agendamentos');
 
+      // Ordenar os agendamentos em ordem alfabética pelo nome do cliente
+      appointments.sort((a, b) => {
+        const nomeA = String(a.usuario_nome || '').toLowerCase();
+        const nomeB = String(b.usuario_nome || '').toLowerCase();
+        return nomeA.localeCompare(nomeB);
+      });
+
       const selectedFilter = appointmentFilter ? appointmentFilter.value : 'todos';
 
       let filtered = appointments;
