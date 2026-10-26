@@ -65,7 +65,12 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, ambiente: 'vercel-or-local', usuarios: state.users.length, servicos: state.services.length });
+  res.json({
+    ok: true,
+    ambiente: 'vercel-or-local',
+    usuarios: state.users.length,
+    servicos: state.services.length
+  });
 });
 
 app.get('/api/sessao', (req, res) => {
