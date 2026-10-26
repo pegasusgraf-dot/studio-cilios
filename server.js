@@ -188,6 +188,32 @@ app.post('/api/servicos', requireAuth, requireMaster, (req, res) => {
   res.status(201).json(service);
 });
 
+app.put('/api/servicos/:id', requireAuth, requireMaster, (req, res) => {
+  const id = String(req.params.id || '').trim();
+  const nome = String(req.body.nome || '').trim();
+  const valor = Number(req.body.valor || 0);
+  const duracao_minutos = Number(req.body.duracao_minutos || 0);
+
+  if (!id) {
+    return res.status(400).json({ mensagem: 'Selecione um serviço para atualizar.' });
+  }
+
+  const service = state.services.find((item) => String(item.id) === String(id));
+  if (!service) {
+    return res.status(404).json({ mensagem: 'Serviço não encontrado.' });
+  }
+
+  if (!nome || !Number.isFinite(valor) || valor <= 0 || !Number.isFinite(duracao_minutos) || duracao_minutos <= 0) {
+    return res.status(400).json({ mensagem: 'Preencha nome, valor e duração válidos.' });
+  }
+
+  service.nome = nome;
+  service.valor = valor;
+  service.duracao_minutos = duracao_minutos;
+
+  res.json(service);
+});
+
 app.get('/api/agendamentos', requireAuth, (req, res) => {
   const user = req.session.user;
 
