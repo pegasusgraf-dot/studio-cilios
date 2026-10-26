@@ -1,16 +1,20 @@
 {
-  "name": "studio-cilios",
+   "name": "studio-cilios",
   "version": "1.0.0",
   "private": true,
-  "description": "Agendador Studio Cílios - API for Vercel (uses PostgreSQL via DATABASE_URL)",
+  "description": "Agendador Studio Cílios 
   "main": "api/index.js",
   "scripts": {
-    "start": "node api/index.js"
-  },
-  "engines": {
-    "node": ">=18"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "node --check server.js && node --check db.js && node --check api/index.js && node --check public/app.js",
+    "check": "node --check server.js && node --check db.js && node --check api/index.js && node --check public/app.js && node -e \"JSON.parse(require('node:fs').readFileSync('vercel.json', 'utf8'))\""
   },
   "dependencies": {
-    "pg": "^8.10.0"
+    "bcryptjs": "^2.4.3",
+    "cookie-session": "^2.1.1",
+    "express": "^4.21.2",
+    "pg": "^8.23.1",
+    "sql.js": "^1.14.2"
   }
 }
