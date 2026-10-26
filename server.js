@@ -50,8 +50,10 @@ const buildDefaultUser = async () => {
 
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '32kb' }));
+
 app.use((req, res, next) => {
   const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+
   return cookieSession({
     name: 'studio_cilios_session',
     keys: [SESSION_SECRET],
@@ -105,7 +107,11 @@ app.post('/api/cadastro', async (req, res) => {
   };
 
   state.users.push(user);
-  res.status(201).json({ id: user.id, mensagem: 'Cadastro realizado com sucesso.' });
+
+  res.status(201).json({
+    id: user.id,
+    mensagem: 'Cadastro realizado com sucesso.'
+  });
 });
 
 app.post('/api/login', async (req, res) => {
@@ -126,14 +132,26 @@ app.post('/api/login', async (req, res) => {
     return res.status(401).json({ mensagem: 'E-mail ou senha incorretos.' });
   }
 
-  req.session = { user: normalizeUser(user) };
+  req.session = {
+    user: normalizeUser(user)
+  };
+
   res.json({ usuario: req.session.user });
 });
 
 app.get('/api/usuarios/:id', (req, res) => {
   const id = String(req.params.id || '').trim();
-  const user = state.users.find((item) => String(item.id) === String(id));
 
+  if (!id || id === 'studio-cliente') {
+    return res.json({
+      id: 'studio-cliente',
+      nome: 'Studio de Cílios',
+      cargo: 'Master',
+      fotoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=80'
+    });
+  }
+
+  const user = state.users.find((item) => String(item.id) === String(id));
   if (!user) {
     return res.status(404).json({ mensagem: 'Usuário não encontrado.' });
   }
@@ -170,14 +188,22 @@ app.post('/api/servicos', requireAuth, requireMaster, (req, res) => {
   res.status(201).json(service);
 });
 
-app.get('/api/agendamentos', (req, res) => {
-  res.json(state.appointments);
+app.get('/api/agendamentos', requireAuth, (req, res) => {
+  const user = req.session.user;
+
+  if (user.tipo === 'master') {
+    return res.json(state.appointments);
+  }
+
+  res.json(
+    state.appointments.filter((appointment) => String(appointment.usuario_id) === String(user.id))
+  );
 });
 
 app.post('/api/agendamentos', requireAuth, (req, res) => {
   const servico_id = String(req.body.servico_id || '').trim();
   const data_hora = String(req.body.data_hora || '').trim();
-  const usuario_id = req.body.usuario_id || req.session.user.id;
+  const usuario_id = String(req.body.usuario_id || req.session.user.id);
 
   if (!servico_id || !data_hora) {
     return res.status(400).json({ mensagem: 'Selecione um procedimento e informe a data/hora.' });
@@ -193,7 +219,7 @@ app.post('/api/agendamentos', requireAuth, (req, res) => {
     servico_id: service.id,
     servico_nome: service.nome,
     valor: service.valor,
-    usuario_id: String(usuario_id),
+    usuario_id: usuario_id,
     usuario_nome: req.session.user.nome,
     data_hora
   };
@@ -220,13 +246,15 @@ app.delete('/api/agendamentos/:id', requireAuth, (req, res) => {
 });
 
 app.get('/api/usuarios', requireAuth, requireMaster, (req, res) => {
-  res.json(state.users.map((user) => ({
-    id: user.id,
-    nome: user.nome,
-    email: user.email,
-    tipo: user.tipo,
-    pode_editar: user.tipo === 'master' ? 1 : 0
-  })));
+  res.json(
+    state.users.map((user) => ({
+      id: user.id,
+      nome: user.nome,
+      email: user.email,
+      tipo: user.tipo,
+      pode_editar: user.tipo === 'master' ? 1 : 0
+    }))
+  );
 });
 
 const seed = async () => {
