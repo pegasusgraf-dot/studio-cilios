@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const authMessage = document.getElementById('auth-message');
   const nameField = document.getElementById('name-field');
   const serviceForm = document.getElementById('service-form');
+  const serviceIdInput = document.getElementById('service-id');
+  const serviceSubmitButton = document.getElementById('service-submit');
+  const serviceCancelButton = document.getElementById('service-cancel');
   const appointmentForm = document.getElementById('appointment-form');
   const serviceSelect = document.getElementById('service-select');
   const appointmentFilter = document.getElementById('appointment-filter');
@@ -156,6 +159,35 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAdminVisibility();
   };
 
+  const setServiceFormMode = (service = null) => {
+    const editing = !!(service && service.id);
+
+    if (serviceIdInput) serviceIdInput.value = service?.id || '';
+    if (serviceSubmitButton) serviceSubmitButton.textContent = editing ? 'Salvar alterações' : 'Adicionar serviço';
+    if (serviceCancelButton) serviceCancelButton.hidden = !editing;
+    if (serviceSubmitButton) {
+      const icon = serviceSubmitButton.querySelector('span');
+      if (icon) {
+        icon.textContent = editing ? '✓' : '＋';
+      }
+    }
+  };
+
+  const fillServiceForm = (service) => {
+    if (!serviceForm) return;
+
+    const nomeInput = serviceForm.querySelector('input[name="nome"]');
+    const valorInput = serviceForm.querySelector('input[name="valor"]');
+    const duracaoInput = serviceForm.querySelector('input[name="duracao_minutos"]');
+
+    if (nomeInput) nomeInput.value = service?.nome || '';
+    if (valorInput) valorInput.value = service?.valor ?? '';
+    if (duracaoInput) duracaoInput.value = service?.duracao_minutos ?? '';
+
+    setServiceFormMode(service);
+    serviceForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const renderServices = async () => {
     const listEl = document.getElementById('service-list');
     const statServices = document.getElementById('stat-services');
@@ -182,12 +214,24 @@ document.addEventListener('DOMContentLoaded', () => {
           services.forEach((service) => {
             const row = document.createElement('div');
             row.className = 'service-item';
+            row.style.cursor = 'pointer';
             row.innerHTML = `
               <div>
                 <strong>${service.nome}</strong>
                 <div class="muted">${formatCurrency(service.valor)} • ${service.duracao_minutos || 0} min</div>
               </div>
+              <button type="button" class="button button-secondary" data-service-id="${service.id}">Editar</button>
             `;
+
+            const editButton = row.querySelector('button');
+            if (editButton) {
+              editButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                fillServiceForm(service);
+              });
+            }
+
+            row.addEventListener('click', () => fillServiceForm(service));
             listEl.appendChild(row);
           });
         }
@@ -243,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
             row.innerHTML = `
               <div>
                 <strong>${appointment.servico_nome || 'Procedimento'}</strong>
-                <div class="muted">${formatDateTime(appointment.data_hora)}</div>
+                <div class="muted">${appointment.usuario_nome || 'Cliente'} • ${formatDateTime(appointment.data_hora)}</div>
               </div>
               <div class="value-badge">${formatCurrency(appointment.valor)}</div>
             `;
@@ -335,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
     serviceForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const formData = new FormData(serviceForm);
+      const id = String(formData.get('id') || '').trim();
       const nome = String(formData.get('nome') || '').trim();
       const valor = Number(formData.get('valor') || 0);
       const duracao_minutos = Number(formData.get('duracao_minutos') || 0);
@@ -345,18 +390,36 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error('Preencha nome, valor e duração.');
         }
 
-        await apiFetch('/servicos', {
-          method: 'POST',
-          body: JSON.stringify({ nome, valor, duracao_minutos }),
-        });
+        if (id) {
+          await apiFetch(`/servicos/${encodeURIComponent(id)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ nome, valor, duracao_minutos }),
+          });
+          setMessage(status, 'Serviço atualizado com sucesso!', false);
+        } else {
+          await apiFetch('/servicos', {
+            method: 'POST',
+            body: JSON.stringify({ nome, valor, duracao_minutos }),
+          });
+          setMessage(status, 'Serviço salvo com sucesso!', false);
+        }
 
         serviceForm.reset();
-        setMessage(status, 'Serviço salvo com sucesso!', false);
+        setServiceFormMode();
         await renderServices();
       } catch (error) {
         setMessage(status, error.message || 'Erro ao salvar serviço.', true);
       }
     });
+
+    if (serviceCancelButton) {
+      serviceCancelButton.addEventListener('click', () => {
+        const status = document.getElementById('service-message');
+        serviceForm.reset();
+        setServiceFormMode();
+        setMessage(status, 'Edição cancelada.', false);
+      });
+    }
   }
 
   if (appointmentForm) {
@@ -414,6 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const boot = async () => {
     setAuthMode('login');
+    setServiceFormMode();
 
     if (authForm) {
       const emailInput = authForm.querySelector('input[name="email"]');
