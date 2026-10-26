@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentUser = null;
   let authMode = 'login';
+  let appointmentEditId = null;
 
   const setMessage = (element, message, isError = false) => {
     if (!element) return;
@@ -79,12 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!res.ok) {
-      const message =
-        data?.mensagem ||
-        data?.error ||
-        data?.message ||
-        `Erro na requisição (${res.status})`;
-
+      const message = data?.mensagem || data?.error || data?.message || `Erro na requisição (${res.status})`;
       console.error('apiFetch error:', { path, status: res.status, response: data });
       throw new Error(message);
     }
@@ -208,6 +204,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const setAppointmentFormMode = (appointment = null) => {
+    const editing = !!(appointment && appointment.id);
+    appointmentEditId = appointment?.id || null;
+
+    const cancelButton = document.getElementById('cancel-edit');
+    if (cancelButton) cancelButton.hidden = !editing;
+
+    const title = document.getElementById('booking-title');
+    const description = document.getElementById('booking-description');
+    if (title) title.textContent = editing ? 'Editar Agendamento' : 'Novo Agendamento';
+    if (description) description.textContent = editing ? 'Ajuste a data e o procedimento deste agendamento.' : 'Escolha o procedimento de beleza e o horário desejado.';
+
+    const submitButton = document.getElementById('reservation-submit');
+    if (submitButton) {
+      submitButton.innerHTML = editing
+        ? 'Salvar alteração <span aria-hidden="true">↗</span>'
+        : 'Confirmar agendamento <span aria-hidden="true">↗</span>';
+    }
+  };
+
   const fillServiceForm = (service) => {
     if (!serviceForm) return;
 
@@ -225,16 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const removeService = async (serviceId) => {
     if (!serviceId) return;
-
     const shouldDelete = window.confirm('Deseja realmente remover este procedimento?');
     if (!shouldDelete) return;
 
     const status = document.getElementById('service-message');
     try {
-      await apiFetch(`/servicos/${encodeURIComponent(serviceId)}`, {
-        method: 'DELETE',
-      });
-
+      await apiFetch(`/servicos/${encodeURIComponent(serviceId)}`, { method: 'DELETE' });
       setMessage(status, 'Serviço removido com sucesso!', false);
       serviceForm.reset();
       setServiceFormMode();
@@ -242,6 +254,62 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
       setMessage(status, error.message || 'Erro ao remover serviço.', true);
       showToast(error.message || 'Erro ao remover serviço', true);
+    }
+  };
+
+  const removeAppointment = async (appointmentId) => {
+    if (!appointmentId) return;
+    const shouldDelete = window.confirm('Deseja realmente excluir este agendamento?');
+    if (!shouldDelete) return;
+
+    const status = document.getElementById('appointment-message');
+    try {
+      await apiFetch(`/agendamentos/${encodeURIComponent(appointmentId)}`, { method: 'DELETE' });
+      setMessage(status, 'Agendamento removido com sucesso!', false);
+      appointmentForm.reset();
+      setAppointmentFormMode();
+      await renderAppointments();
+    } catch (error) {
+      setMessage(status, error.message || 'Erro ao remover agendamento.', true);
+      showToast(error.message || 'Erro ao remover agendamento', true);
+    }
+  };
+
+  const openAppointmentForEdit = async (appointmentId) => {
+    if (!appointmentId) return;
+
+    try {
+      const appointments = await apiFetch('/agendamentos');
+      const appointment = appointments.find((item) => String(item.id) === String(appointmentId));
+      if (!appointment) {
+        throw new Error('Agendamento não encontrado.');
+      }
+
+      if (serviceSelect) {
+        const services = await apiFetch('/servicos');
+        serviceSelect.innerHTML = '<option value="">Selecione um procedimento</option>';
+        services.forEach((service) => {
+          const option = document.createElement('option');
+          option.value = service.id;
+          option.textContent = `${service.nome} — ${formatCurrency(service.valor)}`;
+          serviceSelect.appendChild(option);
+        });
+        serviceSelect.value = String(appointment.servico_id || '');
+      }
+
+      if (appointmentForm) {
+        const dataInput = appointmentForm.querySelector('input[name="data_hora"]');
+        if (dataInput) {
+          dataInput.value = String(appointment.data_hora || '').slice(0, 16);
+        }
+      }
+
+      setAppointmentFormMode(appointment);
+      setActiveView('agenda');
+      appointmentForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) {
+      console.error('Erro ao carregar agendamento para edição:', error);
+      showToast(error.message || 'Não foi possível editar este agendamento.', true);
     }
   };
 
@@ -355,13 +423,53 @@ document.addEventListener('DOMContentLoaded', () => {
           filtered.forEach((appointment) => {
             const row = document.createElement('div');
             row.className = 'appointment-item';
-            row.innerHTML = `
-              <div>
-                <strong>${appointment.servico_nome || 'Procedimento'}</strong>
-                <div class="muted">${appointment.usuario_nome || 'Cliente'} • ${formatDateTime(appointment.data_hora)}</div>
-              </div>
-              <div class="value-badge">${formatCurrency(appointment.valor)}</div>
+
+            const canManage = !!currentUser && (String(currentUser.tipo).toLowerCase() === 'master' || String(currentUser.id) === String(appointment.usuario_id));
+
+            const left = document.createElement('div');
+            left.innerHTML = `
+              <strong>${appointment.servico_nome || 'Procedimento'}</strong>
+              <div class="muted">${appointment.usuario_nome || 'Cliente'} • ${formatDateTime(appointment.data_hora)}</div>
             `;
+
+            const right = document.createElement('div');
+            right.className = 'value-badge';
+            right.textContent = formatCurrency(appointment.valor);
+
+            const actionWrap = document.createElement('div');
+            actionWrap.style.display = 'flex';
+            actionWrap.style.gap = '0.5rem';
+            actionWrap.style.alignItems = 'center';
+            actionWrap.style.marginTop = '0.5rem';
+
+            if (canManage) {
+              const editButton = document.createElement('button');
+              editButton.type = 'button';
+              editButton.className = 'button button-secondary';
+              editButton.textContent = 'Editar';
+              editButton.addEventListener('click', () => openAppointmentForEdit(appointment.id));
+
+              const deleteButton = document.createElement('button');
+              deleteButton.type = 'button';
+              deleteButton.className = 'button button-danger';
+              deleteButton.textContent = 'Excluir';
+              deleteButton.addEventListener('click', () => removeAppointment(appointment.id));
+
+              actionWrap.appendChild(editButton);
+              actionWrap.appendChild(deleteButton);
+            }
+
+            const metaWrap = document.createElement('div');
+            metaWrap.style.display = 'flex';
+            metaWrap.style.flexDirection = 'column';
+            metaWrap.style.alignItems = 'flex-end';
+            metaWrap.appendChild(right);
+            if (actionWrap.children.length) {
+              metaWrap.appendChild(actionWrap);
+            }
+
+            row.appendChild(left);
+            row.appendChild(metaWrap);
             listEl.appendChild(row);
           });
         }
@@ -520,22 +628,41 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error('Selecione um procedimento e informe a data/hora.');
         }
 
-        await apiFetch('/agendamentos', {
-          method: 'POST',
-          body: JSON.stringify({
-            servico_id,
-            data_hora,
-            usuario_id: currentUser?.id || null,
-          }),
-        });
+        if (appointmentEditId) {
+          await apiFetch(`/agendamentos/${encodeURIComponent(appointmentEditId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ servico_id, data_hora }),
+          });
+          setMessage(status, 'Agendamento atualizado com sucesso!', false);
+        } else {
+          await apiFetch('/agendamentos', {
+            method: 'POST',
+            body: JSON.stringify({
+              servico_id,
+              data_hora,
+              usuario_id: currentUser?.id || null,
+            }),
+          });
+          setMessage(status, 'Agendamento criado com sucesso!', false);
+        }
 
         appointmentForm.reset();
-        setMessage(status, 'Agendamento criado com sucesso!', false);
+        setAppointmentFormMode();
         await renderAppointments();
       } catch (error) {
-        setMessage(status, error.message || 'Erro ao criar agendamento.', true);
+        setMessage(status, error.message || 'Erro ao salvar agendamento.', true);
       }
     });
+
+    const cancelEditButton = document.getElementById('cancel-edit');
+    if (cancelEditButton) {
+      cancelEditButton.addEventListener('click', () => {
+        appointmentForm.reset();
+        setAppointmentFormMode();
+        const status = document.getElementById('appointment-message');
+        setMessage(status, 'Edição cancelada.', false);
+      });
+    }
   }
 
   if (logoutButton) {
@@ -563,6 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const boot = async () => {
     setAuthMode('login');
     setServiceFormMode();
+    setAppointmentFormMode();
     setActiveView('agenda');
 
     if (authForm) {

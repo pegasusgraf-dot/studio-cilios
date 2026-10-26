@@ -227,7 +227,6 @@ app.delete('/api/servicos/:id', requireAuth, requireMaster, (req, res) => {
   }
 
   const [removed] = state.services.splice(serviceIndex, 1);
-
   state.appointments = state.appointments.filter((appointment) => String(appointment.servico_id) !== String(id));
 
   res.json({ mensagem: 'Serviço removido com sucesso.', item: removed });
@@ -271,6 +270,42 @@ app.post('/api/agendamentos', requireAuth, (req, res) => {
 
   state.appointments.push(appointment);
   res.status(201).json(appointment);
+});
+
+app.put('/api/agendamentos/:id', requireAuth, (req, res) => {
+  const id = String(req.params.id || '').trim();
+  const servico_id = String(req.body.servico_id || '').trim();
+  const data_hora = String(req.body.data_hora || '').trim();
+
+  if (!id) {
+    return res.status(400).json({ mensagem: 'Selecione um agendamento para atualizar.' });
+  }
+
+  const appointment = state.appointments.find((item) => String(item.id) === String(id));
+  if (!appointment) {
+    return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
+  }
+
+  const canEdit = req.session.user.tipo === 'master' || String(req.session.user.id) === String(appointment.usuario_id);
+  if (!canEdit) {
+    return res.status(403).json({ mensagem: 'Você não pode alterar este agendamento.' });
+  }
+
+  if (!servico_id || !data_hora) {
+    return res.status(400).json({ mensagem: 'Selecione um procedimento e informe a nova data/hora.' });
+  }
+
+  const service = state.services.find((item) => String(item.id) === String(servico_id));
+  if (!service) {
+    return res.status(404).json({ mensagem: 'Procedimento não encontrado.' });
+  }
+
+  appointment.servico_id = service.id;
+  appointment.servico_nome = service.nome;
+  appointment.valor = service.valor;
+  appointment.data_hora = data_hora;
+
+  res.json(appointment);
 });
 
 app.delete('/api/agendamentos/:id', requireAuth, (req, res) => {
