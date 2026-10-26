@@ -1,15 +1,21 @@
-const express = require('express');
-const app = express();
+app.get('/api/usuarios/:id', async (req, res) => {
+  const id = String(req.params.id || '').trim();
 
-app.use(express.json());
+  try {
+    const user = await get('SELECT id, nome, email, tipo FROM usuarios WHERE id = ?', [id]);
 
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true });
+    if (!user) {
+      return res.status(404).json({ mensagem: 'Usuário não encontrado.' });
+    }
+
+    res.json({
+      id: user.id,
+      nome: user.nome,
+      cargo: user.tipo === 'master' ? 'Master' : 'Cliente',
+      fotoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=80'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensagem: 'Erro ao buscar usuário.' });
+  }
 });
-
-if (require.main === module) {
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => console.log(`Servidor rodando na porta ${port}`));
-}
-
-module.exports = app;
