@@ -1,12 +1,12 @@
 {
-   "name": "studio-cilios",
+  "name": "agendador-cilhos",
   "version": "1.0.0",
   "private": true,
-  "description": "Agendador Studio Cílios" 
-  "main": "api/index.js",
+  "description": "Sistema de agendamento para studio de cílios",
+  "main": "server.js",
   "scripts": {
-    "start": "api/index.js",
-    "dev": "api/index.js",
+    "start": "node server.js",
+    "dev": "node server.js",
     "build": "node --check server.js && node --check db.js && node --check api/index.js && node --check public/app.js",
     "check": "node --check server.js && node --check db.js && node --check api/index.js && node --check public/app.js && node -e \"JSON.parse(require('node:fs').readFileSync('vercel.json', 'utf8'))\""
   },
