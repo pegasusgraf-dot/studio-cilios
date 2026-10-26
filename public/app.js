@@ -188,6 +188,28 @@ document.addEventListener('DOMContentLoaded', () => {
     serviceForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const removeService = async (serviceId) => {
+    if (!serviceId) return;
+
+    const shouldDelete = window.confirm('Deseja realmente remover este procedimento?');
+    if (!shouldDelete) return;
+
+    const status = document.getElementById('service-message');
+    try {
+      await apiFetch(`/servicos/${encodeURIComponent(serviceId)}`, {
+        method: 'DELETE',
+      });
+
+      setMessage(status, 'Serviço removido com sucesso!', false);
+      serviceForm.reset();
+      setServiceFormMode();
+      await renderServices();
+    } catch (error) {
+      setMessage(status, error.message || 'Erro ao remover serviço.', true);
+      showToast(error.message || 'Erro ao remover serviço', true);
+    }
+  };
+
   const renderServices = async () => {
     const listEl = document.getElementById('service-list');
     const statServices = document.getElementById('stat-services');
@@ -220,10 +242,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <strong>${service.nome}</strong>
                 <div class="muted">${formatCurrency(service.valor)} • ${service.duracao_minutos || 0} min</div>
               </div>
-              <button type="button" class="button button-secondary" data-service-id="${service.id}">Editar</button>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" class="button button-secondary" data-action="edit-service" data-service-id="${service.id}">Editar</button>
+                <button type="button" class="button button-danger" data-action="delete-service" data-service-id="${service.id}">Excluir</button>
+              </div>
             `;
 
-            const editButton = row.querySelector('button');
+            const editButton = row.querySelector('[data-action="edit-service"]');
             if (editButton) {
               editButton.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -231,7 +256,18 @@ document.addEventListener('DOMContentLoaded', () => {
               });
             }
 
-            row.addEventListener('click', () => fillServiceForm(service));
+            const deleteButton = row.querySelector('[data-action="delete-service"]');
+            if (deleteButton) {
+              deleteButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                removeService(service.id);
+              });
+            }
+
+            row.addEventListener('click', (event) => {
+              if (event.target.closest('button')) return;
+              fillServiceForm(service);
+            });
             listEl.appendChild(row);
           });
         }
