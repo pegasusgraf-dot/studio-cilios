@@ -77,12 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data?.message ||
         `Erro na requisição (${res.status})`;
 
-      console.error('apiFetch error:', {
-        path,
-        status: res.status,
-        response: data,
-      });
-
+      console.error('apiFetch error:', { path, status: res.status, response: data });
       throw new Error(message);
     }
 
@@ -115,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateAdminVisibility = () => {
     const adminEls = document.querySelectorAll('.admin-only');
-    const canAccessAdmin = !!currentUser && ['admin', 'master', 'adm'].includes(String(currentUser.tipo || '').toLowerCase());
+    const canAccessAdmin = !!currentUser && String(currentUser.tipo || '').toLowerCase() === 'master';
     adminEls.forEach((el) => {
       el.hidden = !canAccessAdmin;
     });
@@ -127,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const role = (user.tipo || 'cliente').toLowerCase();
 
     if (accountName) accountName.textContent = name;
-    if (accountRole) accountRole.textContent = role === 'cliente' ? 'Cliente' : 'Master';
+    if (accountRole) accountRole.textContent = role === 'master' ? 'Master' : 'Cliente';
     if (accountAvatar) accountAvatar.textContent = String(name).trim().charAt(0).toUpperCase() || 'A';
   };
 
@@ -158,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const showApp = () => {
     if (authScreen) authScreen.hidden = true;
     if (appScreen) appScreen.hidden = false;
+    updateAdminVisibility();
   };
 
   const renderServices = async () => {
@@ -303,6 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
           setMessage(authMessage, 'Cadastro realizado com sucesso! Agora faça login.', false);
           setAuthMode('login');
           authForm.reset();
+
+          const emailInput = authForm.querySelector('input[name="email"]');
+          const passwordInput = authForm.querySelector('input[name="senha"]');
+          if (emailInput) emailInput.value = defaultMasterEmail;
+          if (passwordInput) passwordInput.value = defaultMasterPassword;
+
           return;
         }
 
@@ -319,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showApp();
         showToast(`Bem-vindo(a), ${result.usuario?.nome || 'cliente'}!`);
         authForm.reset();
+
         await renderServices();
         await renderAppointments();
       } catch (error) {
@@ -392,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearSession();
       showAuth();
       setAuthMode('login');
+
       if (authForm) {
         authForm.reset();
         const emailInput = authForm.querySelector('input[name="email"]');
@@ -399,6 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (emailInput) emailInput.value = defaultMasterEmail;
         if (passwordInput) passwordInput.value = defaultMasterPassword;
       }
+
       showToast('Sessão encerrada.');
     });
   }
@@ -438,11 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       clearSession();
       showAuth();
-      await renderServices();
-      await renderAppointments();
-      if (authForm) {
-        authForm.requestSubmit();
-      }
     } catch (error) {
       console.error('Erro no bootstrap da UI:', error);
     }
@@ -450,4 +450,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
   boot();
 });
-
