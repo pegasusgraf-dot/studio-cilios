@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const accountAvatar = document.getElementById('account-avatar');
   const logoutButton = document.getElementById('logout-button');
   const toast = document.getElementById('toast');
+  const navButtons = document.querySelectorAll('.nav-link');
+  const viewPanels = document.querySelectorAll('.view-panel');
 
   let currentUser = null;
   let authMode = 'login';
@@ -61,10 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const apiFetch = async (path, options = {}) => {
-    const res = await fetch(`${apiBase}${path}`, {
+    const mergedOptions = {
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       ...options,
-    });
+    };
+
+    const res = await fetch(`${apiBase}${path}`, mergedOptions);
 
     let data = {};
     try {
@@ -111,12 +116,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  const setActiveView = (viewName) => {
+    const targetView = String(viewName || 'agenda');
+
+    navButtons.forEach((button) => {
+      const isActive = button.dataset.view === targetView;
+      button.classList.toggle('is-active', isActive);
+    });
+
+    viewPanels.forEach((panel) => {
+      const panelName = panel.id.replace('-view', '');
+      const isVisible = panelName === targetView;
+      panel.hidden = !isVisible;
+      panel.classList.toggle('is-visible', isVisible);
+    });
+
+    const adminPanel = document.getElementById('cadastros-view');
+    if (adminPanel) {
+      const canAccessAdmin = !!currentUser && String(currentUser.tipo || '').toLowerCase() === 'master';
+      adminPanel.hidden = !canAccessAdmin || targetView !== 'cadastros';
+    }
+  };
+
   const updateAdminVisibility = () => {
     const adminEls = document.querySelectorAll('.admin-only');
     const canAccessAdmin = !!currentUser && String(currentUser.tipo || '').toLowerCase() === 'master';
     adminEls.forEach((el) => {
       el.hidden = !canAccessAdmin;
     });
+
+    const activeView = document.querySelector('.nav-link.is-active')?.dataset.view || 'agenda';
+    if (activeView === 'cadastros' && !canAccessAdmin) {
+      setActiveView('agenda');
+    }
   };
 
   const fillAccount = (user) => {
@@ -134,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem(storageKey, JSON.stringify(user));
     fillAccount(user);
     updateAdminVisibility();
+    setActiveView('agenda');
   };
 
   const clearSession = () => {
@@ -145,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (accountAvatar) accountAvatar.textContent = 'A';
 
     updateAdminVisibility();
+    setActiveView('agenda');
   };
 
   const showAuth = () => {
@@ -157,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (authScreen) authScreen.hidden = true;
     if (appScreen) appScreen.hidden = false;
     updateAdminVisibility();
+    setActiveView('agenda');
   };
 
   const setServiceFormMode = (service = null) => {
@@ -357,6 +392,20 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => setAuthMode(button.dataset.authMode));
   });
 
+  navButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const viewName = button.dataset.view;
+      const canAccessAdmin = !!currentUser && String(currentUser.tipo || '').toLowerCase() === 'master';
+
+      if (viewName === 'cadastros' && !canAccessAdmin) {
+        showToast('Acesso restrito ao usuário master.', true);
+        return;
+      }
+
+      setActiveView(viewName || 'agenda');
+    });
+  });
+
   if (authForm) {
     authForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -514,6 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const boot = async () => {
     setAuthMode('login');
     setServiceFormMode();
+    setActiveView('agenda');
 
     if (authForm) {
       const emailInput = authForm.querySelector('input[name="email"]');
