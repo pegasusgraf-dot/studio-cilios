@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const authMessage = document.getElementById('auth-message');
   const nameField = document.getElementById('name-field');
   const serviceForm = document.getElementById('service-form');
+  const serviceIdInput = document.getElementById('service-id');
+  const serviceSubmitButton = document.getElementById('service-submit');
+  const serviceCancelButton = document.getElementById('service-cancel');
   const appointmentForm = document.getElementById('appointment-form');
   const serviceSelect = document.getElementById('service-select');
   const appointmentFilter = document.getElementById('appointment-filter');
@@ -31,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentUser = null;
   let authMode = 'login';
-  let registeredClients = []; // Armazena a lista de clientes para validação/auto-puxar
+  let registeredClients = [];
 
   const setMessage = (element, message, isError = false) => {
     if (!element) return;
@@ -129,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadRegisteredClients = async () => {
     try {
       registeredClients = await apiFetch('/clientes');
-      // Se for master, podemos transformar o input de nome em um datelist ou sugerir os cadastrados
       if (currentUser?.tipo === 'master' && inputUsuarioNome) {
         let datalist = document.getElementById('clientes-datalist');
         if (!datalist) {
@@ -186,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     appScreen.hidden = true;
   };
 
+  // GERENCIAMENTO E EDIÇÃO DE SERVIÇOS/TRATAMENTOS
   const renderServices = async () => {
     const statServices = document.getElementById('stat-services');
     const adminCount = document.getElementById('admin-count');
@@ -209,19 +212,79 @@ document.addEventListener('DOMContentLoaded', () => {
         services.forEach(s => {
           const row = document.createElement('div');
           row.className = 'service-item';
-          row.innerHTML = `<div><strong>${s.nome}</strong><div class="muted">${formatCurrency(s.valor)} • ${s.duracao_minutos} min</div></div>
-            <button class="button button-danger" data-id="${s.id}">Excluir</button>`;
-          row.querySelector('button').addEventListener('click', async () => {
-            if (confirm('Deseja excluir este serviço?')) {
-              await apiFetch(`/servicos/${s.id}`, { method: 'DELETE' });
-              renderServices();
+          row.style.display = 'flex';
+          row.style.justifyContent = 'space-between';
+          row.style.alignItems = 'center';
+
+          row.innerHTML = `
+            <div>
+              <strong>${s.nome}</strong>
+              <div class="muted">${formatCurrency(s.valor)} • ${s.duracao_minutos} min</div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button class="button" data-action="editar" style="background: #3b82f6; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">Editar</button>
+              <button class="button button-danger" data-action="excluir" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">Excluir</button>
+            </div>
+          `;
+
+          // Botão Editar Tratamento
+          row.querySelector('[data-action="editar"]').addEventListener('click', () => {
+            serviceIdInput.value = s.id;
+            serviceForm.nome.value = s.nome;
+            serviceForm.valor.value = s.valor;
+            serviceForm.duracao_minutos.value = s.duracao_minutos;
+            if (serviceSubmitButton) serviceSubmitButton.textContent = 'Salvar Alterações';
+            if (serviceCancelButton) serviceCancelButton.hidden = false;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+
+          // Botão Excluir Tratamento
+          row.querySelector('[data-action="excluir"]').addEventListener('click', async () => {
+            if (confirm(`Deseja excluir o procedimento "${s.nome}"?`)) {
+              try {
+                await apiFetch(`/servicos/${s.id}`, { method: 'DELETE' });
+                showToast('Serviço removido com sucesso!');
+                renderServices();
+              } catch (err) {
+                showToast(err.message, true);
+              }
             }
           });
+
           listEl.appendChild(row);
         });
       }
     } catch (e) { console.error(e); }
   };
+
+  serviceCancelButton?.addEventListener('click', () => {
+    serviceForm.reset();
+    if (serviceIdInput) serviceIdInput.value = '';
+    if (serviceSubmitButton) serviceSubmitButton.textContent = 'Adicionar serviço';
+    if (serviceCancelButton) serviceCancelButton.hidden = true;
+  });
+
+  serviceForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(serviceForm);
+    const id = formData.get('id');
+    try {
+      await apiFetch(id ? `/servicos/${id}` : '/servicos', {
+        method: id ? 'PUT' : 'POST',
+        body: JSON.stringify({
+          nome: formData.get('nome'),
+          valor: Number(formData.get('valor')),
+          duracao_minutos: Number(formData.get('duracao_minutos'))
+        })
+      });
+      serviceForm.reset();
+      if (serviceIdInput) serviceIdInput.value = '';
+      if (serviceSubmitButton) serviceSubmitButton.textContent = 'Adicionar serviço';
+      if (serviceCancelButton) serviceCancelButton.hidden = true;
+      renderServices();
+      showToast(id ? 'Serviço atualizado com sucesso!' : 'Serviço cadastrado com sucesso!');
+    } catch (e) { showToast(e.message, true); }
+  });
 
   const renderClients = async () => {
     const listEl = document.getElementById('client-list');
@@ -535,25 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       showToast(err.message, true);
     }
-  });
-
-  serviceForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(serviceForm);
-    const id = formData.get('id');
-    try {
-      await apiFetch(id ? `/servicos/${id}` : '/servicos', {
-        method: id ? 'PUT' : 'POST',
-        body: JSON.stringify({
-          nome: formData.get('nome'),
-          valor: Number(formData.get('valor')),
-          duracao_minutos: Number(formData.get('duracao_minutos'))
-        })
-      });
-      serviceForm.reset();
-      renderServices();
-      showToast('Serviço salvo com sucesso!');
-    } catch (e) { showToast(e.message, true); }
   });
 
   logoutButton?.addEventListener('click', () => {
