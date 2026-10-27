@@ -56,7 +56,6 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Health check com contagem real do banco
 app.get('/api/health', async (req, res) => {
   try {
     const usersCount = await pool.query('SELECT COUNT(*) FROM users');
@@ -81,7 +80,6 @@ app.post('/api/logout', (req, res) => {
   res.json({ mensagem: 'Sessão encerrada.' });
 });
 
-// Cadastro de Usuário
 app.post('/api/cadastro', async (req, res) => {
   const nome = String(req.body.nome || '').trim();
   const email = String(req.body.email || '').trim().toLowerCase();
@@ -113,7 +111,6 @@ app.post('/api/cadastro', async (req, res) => {
   }
 });
 
-// Login
 app.post('/api/login', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const senha = String(req.body.senha || '').trim();
@@ -174,7 +171,6 @@ app.get('/api/usuarios/:id', async (req, res) => {
   }
 });
 
-// Serviços
 app.get('/api/servicos', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, nome, valor, duracao_minutos FROM services ORDER BY nome');
@@ -248,7 +244,6 @@ app.delete('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => 
   }
 });
 
-// Agendamentos
 app.get('/api/agendamentos', requireAuth, async (req, res) => {
   const user = req.session.user;
 
@@ -272,7 +267,15 @@ app.get('/api/agendamentos', requireAuth, async (req, res) => {
 app.post('/api/agendamentos', requireAuth, async (req, res) => {
   const servico_id = String(req.body.servico_id || '').trim();
   const data_hora = String(req.body.data_hora || '').trim();
-  const usuario_id = String(req.body.usuario_id || req.session.user.id);
+  
+  // Se for master, permite definir o nome de um cliente customizado, senão usa o logado
+  let usuario_id = req.session.user.id;
+  let usuario_nome = req.session.user.nome;
+
+  if (req.session.user.tipo === 'master' && req.body.usuario_nome) {
+    usuario_nome = String(req.body.usuario_nome).trim();
+    usuario_id = makeId('cli');
+  }
 
   if (!servico_id || !data_hora) {
     return res.status(400).json({ mensagem: 'Selecione um procedimento e informe a data/hora.' });
@@ -292,19 +295,39 @@ app.post('/api/agendamentos', requireAuth, async (req, res) => {
       servico_nome: service.nome,
       valor: service.valor,
       usuario_id: usuario_id,
-      usuario_nome: req.session.user.nome,
-      data_hora
+      usuario_nome: usuario_nome,
+      data_hora,
+      status: 'pendente'
     };
 
     await pool.query(
-      'INSERT INTO appointments (id, servico_id, servico_nome, valor, usuario_id, usuario_nome, data_hora) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [appointment.id, appointment.servico_id, appointment.servico_nome, appointment.valor, appointment.usuario_id, appointment.usuario_nome, appointment.data_hora]
+      'INSERT INTO appointments (id, servico_id, servico_nome, valor, usuario_id, usuario_nome, data_hora, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [appointment.id, appointment.servico_id, appointment.servico_nome, appointment.valor, appointment.usuario_id, appointment.usuario_nome, appointment.data_hora, appointment.status]
     );
 
     res.status(201).json(appointment);
   } catch (err) {
     console.error(err);
     res.status(500).json({ mensagem: 'Erro ao criar agendamento.' });
+  }
+});
+
+// Marcar agendamento como concluído
+app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await pool.query(
+      'UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *',
+      ['concluido', id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
+    }
+
+    res.json({ mensagem: 'Atendimento concluído com sucesso!', appointment: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ mensagem: 'Erro ao concluir atendimento.' });
   }
 });
 
@@ -331,6 +354,43 @@ app.delete('/api/agendamentos/:id', requireAuth, async (req, res) => {
   }
 });
 
+// Rota de Métricas com filtro financeiro por data
+app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => {
+  const dataInicio = req.query.inicio;
+  const dataFim = req.query.fim;
+
+  try {
+    let query = "SELECT * FROM appointments WHERE status = 'concluido'";
+    let params = [];
+
+    if (dataInicio && dataFim) {
+      query += ' AND data_hora >= $1 AND data_hora <= $2';
+      params.push(dataInicio, dataFim + ' 23:59:59');
+    }
+
+    const result = await pool.query(query, params);
+    const appointments = result.rows;
+
+    const totalAtendimentos = appointments.length;
+    let faturamentoTotal = 0;
+
+    appointments.forEach((apt) => {
+      faturamentoTotal += Number(apt.valor || 0);
+    });
+
+    const mediaFaturamentoPorAtendimento = totalAtendimentos > 0 ? faturamentoTotal / totalAtendimentos : 0;
+
+    res.json({
+      totalAtendimentos,
+      faturamentoTotal: faturamentoTotal.toFixed(2),
+      mediaFaturamentoPorAtendimento: mediaFaturamentoPorAtendimento.toFixed(2)
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ mensagem: 'Erro ao calcular métricas.' });
+  }
+});
+
 app.get('/api/usuarios', requireAuth, requireMaster, async (req, res) => {
   try {
     const result = await pool.query('SELECT id, nome, email, tipo FROM users');
@@ -345,7 +405,6 @@ app.get('/api/usuarios', requireAuth, requireMaster, async (req, res) => {
   }
 });
 
-// Inicialização e criação das tabelas corrigidas no Neon
 const initDb = async () => {
   try {
     await pool.query(`
@@ -371,11 +430,11 @@ const initDb = async () => {
         valor NUMERIC,
         usuario_id VARCHAR(64),
         usuario_nome VARCHAR(150),
-        data_hora VARCHAR(50)
+        data_hora VARCHAR(50),
+        status VARCHAR(20) DEFAULT 'pendente'
       );
     `);
 
-    // Inserir usuário Master padrão se não existir
     const masterEmail = 'prodrigosilvacel@gmail.com.br';
     const checkMaster = await pool.query('SELECT id FROM users WHERE email = $1', [masterEmail]);
     
@@ -387,7 +446,6 @@ const initDb = async () => {
       );
     }
 
-    // Inserir serviços iniciais se a tabela estiver vazia
     const checkServices = await pool.query('SELECT COUNT(*) FROM services');
     if (Number(checkServices.rows[0].count) === 0) {
       await pool.query(`
