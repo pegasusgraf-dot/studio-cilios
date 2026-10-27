@@ -70,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const res = await fetch(`${apiBase}${path}`, mergedOptions);
-
     let data = {};
     try {
       data = await res.json();
@@ -79,16 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!res.ok) {
-      const message =
-        data?.mensagem ||
-        data?.error ||
-        data?.message ||
-        `Erro na requisição (${res.status})`;
-
-      console.error('apiFetch error:', { path, status: res.status, response: data });
+      const message = data?.mensagem || data?.error || data?.message || `Erro na requisição (${res.status})`;
       throw new Error(message);
     }
-
     return data;
   };
 
@@ -103,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nameField) nameField.hidden = !isRegister;
     if (authEyebrow) authEyebrow.textContent = isRegister ? 'CRIE SUA CONTA' : 'BEM-VINDA DE VOLTA';
     if (authTitle) authTitle.textContent = isRegister ? 'Crie sua conta' : 'Acesse sua conta';
-    if (authDescription) authDescription.textContent = isRegister ? 'Cadastre-se para aproveitar a agenda do studio.' : 'Entre para consultar sua agenda ou marcar um procedimento.';
+    if (authDescription) authDescription.textContent = isRegister ? 'Cadastre-se para aproveitar a agenda.' : 'Entre para consultar sua agenda ou marcar um procedimento.';
 
     const submitButton = authForm ? authForm.querySelector('button[type="submit"]') : null;
     if (submitButton) submitButton.textContent = isRegister ? 'Criar conta' : 'Entrar';
@@ -116,14 +108,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Função para buscar e renderizar as métricas financeiras (Master)
+  // Renderizar métricas com suporte a filtro por data
   const renderMasterMetrics = async () => {
     const totalEl = document.getElementById('metric-total-atendimentos');
     const faturamentoEl = document.getElementById('metric-faturamento');
     const mediaEl = document.getElementById('metric-media');
+    const inicioInput = document.getElementById('filtro-inicio')?.value;
+    const fimInput = document.getElementById('filtro-fim')?.value;
+
+    let queryPath = '/master/metricas';
+    if (inicioInput && fimInput) {
+      queryPath += `?inicio=${inicioInput}&fim=${fimInput}`;
+    }
 
     try {
-      const metrics = await apiFetch('/master/metricas');
+      const metrics = await apiFetch(queryPath);
       if (totalEl) totalEl.textContent = metrics.totalAtendimentos || 0;
       if (faturamentoEl) faturamentoEl.textContent = formatCurrency(metrics.faturamentoTotal);
       if (mediaEl) mediaEl.textContent = formatCurrency(metrics.mediaFaturamentoPorAtendimento);
@@ -132,6 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Erro ao carregar relatório financeiro', true);
     }
   };
+
+  const filtrarBtn = document.getElementById('filtrar-metricas');
+  if (filtrarBtn) {
+    filtrarBtn.addEventListener('click', renderMasterMetrics);
+  }
 
   const setActiveView = (viewName) => {
     const targetView = String(viewName || 'agenda');
@@ -199,11 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearSession = () => {
     currentUser = null;
     localStorage.removeItem(storageKey);
-
     if (accountName) accountName.textContent = 'Nome';
     if (accountRole) accountRole.textContent = 'Cliente';
     if (accountAvatar) accountAvatar.textContent = 'A';
-
     updateAdminVisibility();
     setActiveView('agenda');
   };
@@ -223,21 +225,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const setServiceFormMode = (service = null) => {
     const editing = !!(service && service.id);
-
     if (serviceIdInput) serviceIdInput.value = service?.id || '';
     if (serviceSubmitButton) serviceSubmitButton.textContent = editing ? 'Salvar alterações' : 'Adicionar serviço';
     if (serviceCancelButton) serviceCancelButton.hidden = !editing;
-    if (serviceSubmitButton) {
-      const icon = serviceSubmitButton.querySelector('span');
-      if (icon) {
-        icon.textContent = editing ? '✓' : '＋';
-      }
-    }
   };
 
   const fillServiceForm = (service) => {
     if (!serviceForm) return;
-
     const nomeInput = serviceForm.querySelector('input[name="nome"]');
     const valorInput = serviceForm.querySelector('input[name="valor"]');
     const duracaoInput = serviceForm.querySelector('input[name="duracao_minutos"]');
@@ -245,31 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nomeInput) nomeInput.value = service?.nome || '';
     if (valorInput) valorInput.value = service?.valor ?? '';
     if (duracaoInput) duracaoInput.value = service?.duracao_minutos ?? '';
-
     setServiceFormMode(service);
-    serviceForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  const removeService = async (serviceId) => {
-    if (!serviceId) return;
-
-    const shouldDelete = window.confirm('Deseja realmente remover este procedimento?');
-    if (!shouldDelete) return;
-
-    const status = document.getElementById('service-message');
-    try {
-      await apiFetch(`/servicos/${encodeURIComponent(serviceId)}`, {
-        method: 'DELETE',
-      });
-
-      setMessage(status, 'Serviço removido com sucesso!', false);
-      serviceForm.reset();
-      setServiceFormMode();
-      await renderServices();
-    } catch (error) {
-      setMessage(status, error.message || 'Erro ao remover serviço.', true);
-      showToast(error.message || 'Erro ao remover serviço', true);
-    }
   };
 
   const renderServices = async () => {
@@ -310,26 +280,19 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
 
-            const editButton = row.querySelector('[data-action="edit-service"]');
-            if (editButton) {
-              editButton.addEventListener('click', (event) => {
-                event.stopPropagation();
-                fillServiceForm(service);
-              });
-            }
-
-            const deleteButton = row.querySelector('[data-action="delete-service"]');
-            if (deleteButton) {
-              deleteButton.addEventListener('click', (event) => {
-                event.stopPropagation();
-                removeService(service.id);
-              });
-            }
-
-            row.addEventListener('click', (event) => {
-              if (event.target.closest('button')) return;
+            row.querySelector('[data-action="edit-service"]').addEventListener('click', (e) => {
+              e.stopPropagation();
               fillServiceForm(service);
             });
+
+            row.querySelector('[data-action="delete-service"]').addEventListener('click', async (e) => {
+              e.stopPropagation();
+              if (window.confirm('Deseja remover este serviço?')) {
+                await apiFetch(`/servicos/${service.id}`, { method: 'DELETE' });
+                await renderServices();
+              }
+            });
+
             listEl.appendChild(row);
           });
         }
@@ -339,9 +302,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (adminCount) adminCount.textContent = String(services.length || 0);
     } catch (error) {
       console.error('Erro ao carregar serviços:', error);
-      if (listEl) listEl.innerHTML = '<p>Não foi possível carregar os serviços.</p>';
-      if (statServices) statServices.textContent = '0';
-      showToast(error.message || 'Erro ao carregar serviços', true);
+    }
+  };
+
+  const concluirAtendimento = async (id) => {
+    try {
+      await apiFetch(`/agendamentos/${id}/concluir`, { method: 'PATCH' });
+      showToast('Atendimento concluído com sucesso!');
+      await renderAppointments();
+    } catch (error) {
+      showToast(error.message || 'Erro ao concluir atendimento', true);
     }
   };
 
@@ -362,20 +332,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const selectedFilter = appointmentFilter ? appointmentFilter.value : 'todos';
-
       let filtered = appointments;
       if (selectedFilter !== 'todos') {
         filtered = appointments.filter((appointment) => String(appointment.servico_id) === String(selectedFilter));
-      }
-
-      if (appointmentFilter) {
-        const services = await apiFetch('/servicos');
-        const options = ['<option value="todos">Todos os serviços</option>'];
-        services.forEach((service) => {
-          options.push(`<option value="${service.id}">${service.nome}</option>`);
-        });
-        appointmentFilter.innerHTML = options.join('');
-        appointmentFilter.value = selectedFilter === 'todos' ? 'todos' : selectedFilter;
       }
 
       if (listEl) {
@@ -388,13 +347,28 @@ document.addEventListener('DOMContentLoaded', () => {
           filtered.forEach((appointment) => {
             const row = document.createElement('div');
             row.className = 'appointment-item';
+            const isMaster = currentUser?.tipo === 'master';
+            const isConcluido = appointment.status === 'concluido';
+
             row.innerHTML = `
               <div>
                 <strong>${appointment.servico_nome || 'Procedimento'}</strong>
-                <div class="muted">${appointment.usuario_nome || 'Cliente'} • ${formatDateTime(appointment.data_hora)}</div>
+                <div class="muted">Cliente: <strong>${appointment.usuario_nome || 'Cliente'}</strong> • ${formatDateTime(appointment.data_hora)}</div>
+                <div style="font-size: 11px; margin-top: 4px; color: ${isConcluido ? '#16a34a' : '#d97706'}; font-weight: bold;">
+                  Status: ${isConcluido ? 'Concluído' : 'Pendente'}
+                </div>
               </div>
-              <div class="value-badge">${formatCurrency(appointment.valor)}</div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="value-badge">${formatCurrency(appointment.valor)}</div>
+                ${isMaster && !isConcluido ? `<button type="button" class="button button-secondary" data-action="concluir" data-id="${appointment.id}" style="padding: 5px 10px; font-size: 11px; background: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer;">Concluir</button>` : ''}
+              </div>
             `;
+
+            const concluirBtn = row.querySelector('[data-action="concluir"]');
+            if (concluirBtn) {
+              concluirBtn.addEventListener('click', () => concluirAtendimento(appointment.id));
+            }
+
             listEl.appendChild(row);
           });
         }
@@ -415,9 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);
-      if (listEl) listEl.innerHTML = '<p>Não foi possível carregar os agendamentos.</p>';
-      if (statMine) statMine.textContent = '0';
-      showToast(error.message || 'Erro ao carregar agendamentos', true);
     }
   };
 
@@ -449,45 +420,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         if (authMode === 'register') {
-          if (!nome || !email || !senha) {
-            throw new Error('Nome, e-mail e senha são obrigatórios.');
-          }
-
-          await apiFetch('/cadastro', {
-            method: 'POST',
-            body: JSON.stringify({ nome, email, senha }),
-          });
-
+          await apiFetch('/cadastro', { method: 'POST', body: JSON.stringify({ nome, email, senha }) });
           setMessage(authMessage, 'Cadastro realizado com sucesso! Faça login.', false);
           setAuthMode('login');
           authForm.reset();
-
-          const emailInput = authForm.querySelector('input[name="email"]');
-          const passwordInput = authForm.querySelector('input[name="senha"]');
-          if (emailInput) emailInput.value = defaultMasterEmail;
-          if (passwordInput) passwordInput.value = defaultMasterPassword;
-
           return;
         }
 
-        if (!email || !senha) {
-          throw new Error('E-mail e senha são obrigatórios.');
-        }
-
-        const result = await apiFetch('/login', {
-          method: 'POST',
-          body: JSON.stringify({ email, senha }),
-        });
-
+        const result = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
         saveSession(result.usuario);
         showApp();
         showToast(`Bem-vindo(a), ${result.usuario?.nome || 'cliente'}!`);
         authForm.reset();
-
         await renderServices();
         await renderAppointments();
       } catch (error) {
-        setMessage(authMessage, error.message || 'Não foi possível continuar.', true);
+        setMessage(authMessage, error.message || 'Erro ao autenticar', true);
         showToast(error.message || 'Erro ao autenticar', true);
       }
     });
@@ -504,24 +452,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const status = document.getElementById('service-message');
 
       try {
-        if (!nome || !valor || !duracao_minutos) {
-          throw new Error('Preencha nome, valor e duração.');
-        }
-
         if (id) {
-          await apiFetch(`/servicos/${encodeURIComponent(id)}`, {
-            method: 'PUT',
-            body: JSON.stringify({ nome, valor, duracao_minutos }),
-          });
+          await apiFetch(`/servicos/${id}`, { method: 'PUT', body: JSON.stringify({ nome, valor, duracao_minutos }) });
           setMessage(status, 'Serviço atualizado com sucesso!', false);
         } else {
-          await apiFetch('/servicos', {
-            method: 'POST',
-            body: JSON.stringify({ nome, valor, duracao_minutos }),
-          });
+          await apiFetch('/servicos', { method: 'POST', body: JSON.stringify({ nome, valor, duracao_minutos }) });
           setMessage(status, 'Serviço salvo com sucesso!', false);
         }
-
         serviceForm.reset();
         setServiceFormMode();
         await renderServices();
@@ -529,37 +466,31 @@ document.addEventListener('DOMContentLoaded', () => {
         setMessage(status, error.message || 'Erro ao salvar serviço.', true);
       }
     });
-
-    if (serviceCancelButton) {
-      serviceCancelButton.addEventListener('click', () => {
-        const status = document.getElementById('service-message');
-        serviceForm.reset();
-        setServiceFormMode();
-        setMessage(status, 'Edição cancelada.', false);
-      });
-    }
   }
 
   if (appointmentForm) {
+    // Insere campo dinâmico de nome do cliente caso seja Master
+    if (currentUser?.tipo === 'master' && !document.getElementById('custom-client-name')) {
+      const container = document.createElement('label');
+      container.className = 'field';
+      container.innerHTML = `Nome do Cliente (Master)
+        <input type="text" id="custom-client-name" name="usuario_nome" placeholder="Deixe em branco para usar o seu nome">
+      `;
+      appointmentForm.prepend(container);
+    }
+
     appointmentForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const formData = new FormData(appointmentForm);
       const servico_id = String(formData.get('servico_id') || '').trim();
       const data_hora = String(formData.get('data_hora') || '').trim();
+      const usuario_nome = String(formData.get('usuario_nome') || '').trim();
       const status = document.getElementById('appointment-message');
 
       try {
-        if (!servico_id || !data_hora) {
-          throw new Error('Selecione um procedimento e informe a data/hora.');
-        }
-
         await apiFetch('/agendamentos', {
           method: 'POST',
-          body: JSON.stringify({
-            servico_id,
-            data_hora,
-            usuario_id: currentUser?.id || null,
-          }),
+          body: JSON.stringify({ servico_id, data_hora, usuario_nome }),
         });
 
         appointmentForm.reset();
@@ -576,21 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
       clearSession();
       showAuth();
       setAuthMode('login');
-
-      if (authForm) {
-        authForm.reset();
-        const emailInput = authForm.querySelector('input[name="email"]');
-        const passwordInput = authForm.querySelector('input[name="senha"]');
-        if (emailInput) emailInput.value = defaultMasterEmail;
-        if (passwordInput) passwordInput.value = defaultMasterPassword;
-      }
-
       showToast('Sessão encerrada.');
     });
-  }
-
-  if (appointmentFilter) {
-    appointmentFilter.addEventListener('change', renderAppointments);
   }
 
   const boot = async () => {
@@ -598,36 +516,25 @@ document.addEventListener('DOMContentLoaded', () => {
     setServiceFormMode();
     setActiveView('agenda');
 
-    if (authForm) {
-      const emailInput = authForm.querySelector('input[name="email"]');
-      const passwordInput = authForm.querySelector('input[name="senha"]');
-      if (emailInput) emailInput.value = defaultMasterEmail;
-      if (passwordInput) passwordInput.value = defaultMasterPassword;
-    }
-
     try {
       const savedUser = localStorage.getItem(storageKey);
       if (savedUser) {
-        try {
-          const parsed = JSON.parse(savedUser);
-          if (parsed && parsed.id) {
-            currentUser = parsed;
-            fillAccount(currentUser);
-            updateAdminVisibility();
-            showApp();
-            await renderServices();
-            await renderAppointments();
-            return;
-          }
-        } catch (error) {
-          console.warn('Sessão inválida:', error);
+        const parsed = JSON.parse(savedUser);
+        if (parsed && parsed.id) {
+          currentUser = parsed;
+          fillAccount(currentUser);
+          updateAdminVisibility();
+          showApp();
+          await renderServices();
+          await renderAppointments();
+          return;
         }
       }
-
       clearSession();
       showAuth();
     } catch (error) {
-      console.error('Erro no bootstrap da UI:', error);
+      clearSession();
+      showAuth();
     }
   };
 
