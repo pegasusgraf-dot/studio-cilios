@@ -128,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (accountRole) accountRole.textContent = user.tipo === 'master' ? 'Master' : 'Cliente';
     if (accountAvatar) accountAvatar.textContent = String(user.nome || 'A').charAt(0).toUpperCase();
     
-    // Se for cliente comum, preenche o campo de nome no form e o trava
     if (inputUsuarioNome) {
       if (user.tipo !== 'master') {
         inputUsuarioNome.value = user.nome;
@@ -157,8 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const renderServices = async () => {
+    const statServices = document.getElementById('stat-services');
+    const adminCount = document.getElementById('admin-count');
     try {
       const services = await apiFetch('/servicos');
+      if (statServices) statServices.textContent = String(services.length || 0);
+      if (adminCount) adminCount.textContent = String(services.length || 0);
+
       if (serviceSelect) {
         serviceSelect.innerHTML = '<option value="">Selecione um procedimento</option>';
         services.forEach(s => {
@@ -188,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { console.error(e); }
   };
 
-  // Funções para mudar o status do agendamento
   const alterarStatusAtendimento = async (id, acao) => {
     try {
       await apiFetch(`/agendamentos/${id}/${acao}`, { method: 'PATCH' });
@@ -202,23 +205,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const renderAppointments = async () => {
     const listEl = document.getElementById('appointment-list');
+    const statMine = document.getElementById('stat-mine');
+    const statNext = document.getElementById('stat-next');
+    const statNextDetail = document.getElementById('stat-next-detail');
+    const emptyState = document.getElementById('empty-state');
+
     try {
       const appointments = await apiFetch('/agendamentos');
       const filterVal = appointmentFilter ? appointmentFilter.value : 'todos';
       let filtered = filterVal === 'todos' ? appointments : appointments.filter(a => String(a.servico_id) === filterVal);
 
+      if (statMine) statMine.textContent = String(filtered.length || 0);
+
+      // Calcular o próximo agendamento futuro pendente
+      const next = [...appointments]
+        .filter(a => (a.status || 'pendente') === 'pendente' && new Date(a.data_hora).getTime() > Date.now())
+        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
+
+      if (next) {
+        if (statNext) statNext.textContent = formatDateTime(next.data_hora);
+        if (statNextDetail) statNextDetail.textContent = `${next.servico_nome} (${next.usuario_nome})`;
+      } else {
+        if (statNext) statNext.textContent = '—';
+        if (statNextDetail) statNextDetail.textContent = 'Nenhum agendamento futuro';
+      }
+
       if (listEl) {
         listEl.innerHTML = '';
         if (!filtered.length) {
+          if (emptyState) emptyState.hidden = false;
           listEl.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
         } else {
+          if (emptyState) emptyState.hidden = true;
           filtered.forEach(apt => {
             const row = document.createElement('div');
             row.className = 'appointment-item';
             const isMaster = currentUser?.tipo === 'master';
             const status = apt.status || 'pendente';
 
-            let statusCor = '#d97706'; // pendente
+            let statusCor = '#d97706';
             if (status === 'concluido') statusCor = '#16a34a';
             if (status === 'cancelado') statusCor = '#dc3545';
 
@@ -258,6 +283,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setActiveView(btn.dataset.view);
   }));
+
+  appointmentFilter?.addEventListener('change', renderAppointments);
 
   authForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -299,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentUser?.tipo !== 'master' && inputUsuarioNome) inputUsuarioNome.value = currentUser.nome;
       showToast('Agendamento criado com sucesso!');
       renderAppointments();
+      renderMasterMetrics();
     } catch (err) {
       showToast(err.message, true);
     }
