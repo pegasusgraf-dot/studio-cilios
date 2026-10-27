@@ -140,37 +140,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.get('/api/usuarios/:id', async (req, res) => {
-  const id = String(req.params.id || '').trim();
-
-  if (!id || id === 'studio-cliente') {
-    return res.json({
-      id: 'studio-cliente',
-      nome: 'Studio de Cílios',
-      cargo: 'Master',
-      fotoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=80'
-    });
-  }
-
-  try {
-    const result = await pool.query('SELECT id, nome, tipo FROM users WHERE id = $1', [id]);
-    const user = result.rows[0];
-
-    if (!user) {
-      return res.status(404).json({ mensagem: 'Usuário não encontrado.' });
-    }
-
-    res.json({
-      id: user.id,
-      nome: user.nome,
-      cargo: user.tipo === 'master' ? 'Master' : 'Cliente',
-      fotoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=80'
-    });
-  } catch (err) {
-    res.status(500).json({ mensagem: 'Erro interno no servidor.' });
-  }
-});
-
 app.get('/api/servicos', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, nome, valor, duracao_minutos FROM services ORDER BY nome');
@@ -268,7 +237,6 @@ app.post('/api/agendamentos', requireAuth, async (req, res) => {
   const servico_id = String(req.body.servico_id || '').trim();
   const data_hora = String(req.body.data_hora || '').trim();
   
-  // Se for master, permite definir o nome de um cliente customizado, senão usa o logado
   let usuario_id = req.session.user.id;
   let usuario_nome = req.session.user.nome;
 
@@ -312,9 +280,9 @@ app.post('/api/agendamentos', requireAuth, async (req, res) => {
   }
 });
 
-// Marcar agendamento como concluído
+// Rota para concluir atendimento
 app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (req, res) => {
-  const id = req.params.id;
+  const id = String(req.params.id || '').trim();
   try {
     const result = await pool.query(
       'UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *',
@@ -327,6 +295,7 @@ app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (r
 
     res.json({ mensagem: 'Atendimento concluído com sucesso!', appointment: result.rows[0] });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ mensagem: 'Erro ao concluir atendimento.' });
   }
 });
@@ -364,8 +333,8 @@ app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => 
     let params = [];
 
     if (dataInicio && dataFim) {
-      query += ' AND data_hora >= $1 AND data_hora <= $2';
-      params.push(dataInicio, dataFim + ' 23:59:59');
+      query += ' AND LEFT(data_hora, 10) >= $1 AND LEFT(data_hora, 10) <= $2';
+      params.push(dataInicio, dataFim);
     }
 
     const result = await pool.query(query, params);
@@ -388,20 +357,6 @@ app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => 
   } catch (err) {
     console.error(err);
     res.status(500).json({ mensagem: 'Erro ao calcular métricas.' });
-  }
-});
-
-app.get('/api/usuarios', requireAuth, requireMaster, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT id, nome, email, tipo FROM users');
-    res.json(
-      result.rows.map((user) => ({
-        ...user,
-        pode_editar: user.tipo === 'master' ? 1 : 0
-      }))
-    );
-  } catch (err) {
-    res.status(500).json({ mensagem: 'Erro ao listar usuários.' });
   }
 });
 
@@ -444,16 +399,6 @@ const initDb = async () => {
         'INSERT INTO users (id, nome, email, senha, tipo) VALUES ($1, $2, $3, $4, $5)',
         ['master-1', 'Studio Master', masterEmail, passwordHash, 'master']
       );
-    }
-
-    const checkServices = await pool.query('SELECT COUNT(*) FROM services');
-    if (Number(checkServices.rows[0].count) === 0) {
-      await pool.query(`
-        INSERT INTO services (id, nome, valor, duracao_minutos) VALUES 
-        ('serv-1', 'Alongamento de cílios', 180, 90),
-        ('serv-2', 'Volume russo', 240, 120),
-        ('serv-3', 'Lash lifting', 220, 75);
-      `);
     }
 
     console.log('Banco de dados Neon sincronizado com sucesso.');
