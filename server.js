@@ -236,14 +236,10 @@ app.get('/api/agendamentos', requireAuth, async (req, res) => {
 app.post('/api/agendamentos', requireAuth, async (req, res) => {
   const servico_id = String(req.body.servico_id || '').trim();
   const data_hora = String(req.body.data_hora || '').trim();
+  const nomeClienteInput = String(req.body.usuario_nome || '').trim();
   
   let usuario_id = req.session.user.id;
-  let usuario_nome = req.session.user.nome;
-
-  if (req.session.user.tipo === 'master' && req.body.usuario_nome) {
-    usuario_nome = String(req.body.usuario_nome).trim();
-    usuario_id = makeId('cli');
-  }
+  let usuario_nome = nomeClienteInput || req.session.user.nome;
 
   if (!servico_id || !data_hora) {
     return res.status(400).json({ mensagem: 'Selecione um procedimento e informe a data/hora.' });
@@ -280,7 +276,7 @@ app.post('/api/agendamentos', requireAuth, async (req, res) => {
   }
 });
 
-// Rota corrigida para concluir atendimento
+// Marcar como concluído
 app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
@@ -288,33 +284,38 @@ app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (r
       'UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *',
       ['concluido', id]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
-    }
-
+    if (result.rows.length === 0) return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
     res.json({ mensagem: 'Atendimento concluído com sucesso!', appointment: result.rows[0] });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ mensagem: 'Erro ao concluir atendimento.' });
+  }
+});
+
+// Marcar como cancelado (cliente não veio)
+app.patch('/api/agendamentos/:id/cancelar', requireAuth, requireMaster, async (req, res) => {
+  const id = String(req.params.id || '').trim();
+  try {
+    const result = await pool.query(
+      'UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *',
+      ['cancelado', id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
+    res.json({ mensagem: 'Atendimento cancelado (cliente não compareceu).', appointment: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ mensagem: 'Erro ao cancelar atendimento.' });
   }
 });
 
 app.delete('/api/agendamentos/:id', requireAuth, async (req, res) => {
   const id = String(req.params.id || '');
-
   try {
     const aptRes = await pool.query('SELECT * FROM appointments WHERE id = $1', [id]);
     const appointment = aptRes.rows[0];
 
-    if (!appointment) {
-      return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
-    }
+    if (!appointment) return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
 
     const canDelete = req.session.user.tipo === 'master' || req.session.user.id === appointment.usuario_id;
-    if (!canDelete) {
-      return res.status(403).json({ mensagem: 'Você não pode remover este agendamento.' });
-    }
+    if (!canDelete) return res.status(403).json({ mensagem: 'Você não pode remover este agendamento.' });
 
     await pool.query('DELETE FROM appointments WHERE id = $1', [id]);
     res.json({ mensagem: 'Agendamento removido.' });
@@ -323,7 +324,7 @@ app.delete('/api/agendamentos/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Rota de Métricas corrigida para tratar datas de forma segura
+// Rota de Métricas (apenas concluídos entram no financeiro)
 app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => {
   const dataInicio = req.query.inicio;
   const dataFim = req.query.fim;
@@ -342,11 +343,7 @@ app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => 
 
     const totalAtendimentos = appointments.length;
     let faturamentoTotal = 0;
-
-    appointments.forEach((apt) => {
-      faturamentoTotal += Number(apt.valor || 0);
-    });
-
+    appointments.forEach((apt) => { faturamentoTotal += Number(apt.valor || 0); });
     const mediaFaturamentoPorAtendimento = totalAtendimentos > 0 ? faturamentoTotal / totalAtendimentos : 0;
 
     res.json({
@@ -355,7 +352,6 @@ app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => 
       mediaFaturamentoPorAtendimento: mediaFaturamentoPorAtendimento.toFixed(2)
     });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ mensagem: 'Erro ao calcular métricas.' });
   }
 });
@@ -392,7 +388,6 @@ const initDb = async () => {
 
     const masterEmail = 'prodrigosilvacel@gmail.com.br';
     const checkMaster = await pool.query('SELECT id FROM users WHERE email = $1', [masterEmail]);
-    
     if (checkMaster.rows.length === 0) {
       const passwordHash = await bcrypt.hash('w18187', 10);
       await pool.query(
@@ -400,10 +395,8 @@ const initDb = async () => {
         ['master-1', 'Studio Master', masterEmail, passwordHash, 'master']
       );
     }
-
-    console.log('Banco de dados Neon sincronizado com sucesso.');
   } catch (err) {
-    console.error('Erro ao inicializar tabelas no Neon:', err);
+    console.error('Erro ao inicializar tabelas:', err);
   }
 };
 
@@ -414,7 +407,7 @@ app.get('*', (req, res) => {
 initDb().then(() => {
   if (require.main === module) {
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Studio de cílios rodando em http://localhost:${PORT}`);
+      console.log(`Studio rodando na porta ${PORT}`);
     });
   }
 });
