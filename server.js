@@ -235,7 +235,6 @@ app.delete('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => 
   const id = String(req.params.id || '').trim();
 
   try {
-    // Remove agendamentos atrelados ao serviço e o serviço em si
     await pool.query('DELETE FROM appointments WHERE servico_id = $1', [id]);
     const result = await pool.query('DELETE FROM services WHERE id = $1 RETURNING *', [id]);
 
@@ -346,7 +345,7 @@ app.get('/api/usuarios', requireAuth, requireMaster, async (req, res) => {
   }
 });
 
-// Inicialização e criação das tabelas automaticamente no Neon se não existirem
+// Inicialização e criação das tabelas corrigidas no Neon
 const initDb = async () => {
   try {
     await pool.query(`
@@ -361,7 +360,7 @@ const initDb = async () => {
       CREATE TABLE IF NOT EXISTS services (
         id VARCHAR(64) PRIMARY KEY,
         nome VARCHAR(150) NOT NULL,
-        NUMERIC valor,
+        valor NUMERIC,
         duracao_minutos INT NOT NULL
       );
 
