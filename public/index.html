@@ -20,6 +20,8 @@
       .cracha-card { width: 320px; height: 200px; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin: 20px auto; text-align: center; }
       .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
       .modal-card { background: white; width: 100%; max-width: 600px; border-radius: 8px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+      .question-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; background: #f8fafc; padding: 8px 12px; border-radius: 6px; }
+      .question-options { display: flex; gap: 15px; align-items: center; font-weight: normal; }
     </style>
   </head>
   <body>
@@ -165,24 +167,28 @@
           </div>
           <div class="management-grid">
             <section class="management-panel card">
-              <form id="service-form" class="form-stack compact-form">
+              <h3>Cadastrar ou Editar Procedimento</h3>
+              <form id="service-form" class="form-stack compact-form" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
                 <input type="hidden" name="id" id="service-id" value="">
                 <label class="field">Nome do Procedimento
-                  <input type="text" name="nome" required placeholder="Ex: Extensão Volume Russo">
+                  <input type="text" name="nome" required placeholder="Ex: Extensão Volume Russo" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
                 </label>
                 <label class="field">Valor (R$)
-                  <input type="number" step="0.01" name="valor" required placeholder="120.00">
+                  <input type="number" step="0.01" name="valor" required placeholder="120.00" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
                 </label>
                 <label class="field">Duração (minutos)
-                  <input type="number" name="duracao_minutos" required placeholder="90">
+                  <input type="number" name="duracao_minutos" required placeholder="90" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
                 </label>
-                <button id="service-submit" type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Adicionar serviço</button>
-                <button id="service-cancel" type="button" class="button button-secondary" hidden>Cancelar</button>
+                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                  <button id="service-submit" type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; flex: 1;">Adicionar serviço</button>
+                  <button id="service-cancel" type="button" class="button button-secondary" hidden style="background: #64748b; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">Cancelar</button>
+                </div>
                 <p class="form-message" id="service-message" role="status"></p>
               </form>
             </section>
             <section class="management-panel card">
-              <div class="management-list items-list" id="service-list"></div>
+              <h3>Procedimentos Cadastrados</h3>
+              <div class="management-list items-list" id="service-list" style="margin-top: 10px;"></div>
             </section>
           </div>
         </section>
@@ -242,54 +248,79 @@
             <form id="ficha-form" style="display: flex; flex-direction: column; gap: 12px;">
               <input type="hidden" id="ficha-cliente-id" name="cliente_id">
 
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold;">
-                <input type="checkbox" name="usa_rimel" style="width: 16px; height: 16px;">
-                Usa rímel?
+              <!-- PERGUNTAS COM SIM / NÃO -->
+              <div class="question-row">
+                <span>Usa rímel?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="usa_rimel" value="sim"> Sim</label>
+                  <label><input type="radio" name="usa_rimel" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Possui problemas de tireoide?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="problemas_tireoide" value="sim"> Sim</label>
+                  <label><input type="radio" name="problemas_tireoide" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Possui Diabetes?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="possui_diabetes" value="sim"> Sim</label>
+                  <label><input type="radio" name="possui_diabetes" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>É gestante?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="gestante" value="sim"> Sim</label>
+                  <label><input type="radio" name="gestante" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Procedimento recente nos olhos?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="procedimento_recente_olhos" value="sim"> Sim</label>
+                  <label><input type="radio" name="procedimento_recente_olhos" value="nao"> Não</label>
+                </div>
+              </div>
+              <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, qual procedimento recente nos olhos?
+                <input type="text" name="procedimento_recente_olhos_qual" placeholder="Especifique o procedimento" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
               </label>
 
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold;">
-                <input type="checkbox" name="problemas_tireoide" style="width: 16px; height: 16px;">
-                Possui problemas tireoide?
-              </label>
-              
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold;">
-                <input type="checkbox" name="possui_diabetes" style="width: 16px; height: 16px;">
-                Possui Diabetes?
-              </label>
-              
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold;">
-                <input type="checkbox" name="gestante" style="width: 16px; height: 16px;">
-                É gestante?
-              </label>
-              
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold;">
-                <input type="checkbox" name="procedimento_recente_olhos" style="width: 16px; height: 16px;">
-                Procedimento recente olhos?
-              </label>
-              <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, qual procedimento recente olhos?
-                <input type="text" name="procedimento_recente_olhos_qual" placeholder="Especifique procedimento" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-              </label>
-
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold;">
-                <input type="checkbox" name="possui_alergia" style="width: 16px; height: 16px;">
-                Possui alergia?
-              </label>
+              <div class="question-row">
+                <span>Possui alergia?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="possui_alergia" value="sim"> Sim</label>
+                  <label><input type="radio" name="possui_alergia" value="nao"> Não</label>
+                </div>
+              </div>
               <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, qual alergia?
                 <input type="text" name="alergia_qual" placeholder="Especifique a alergia" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
               </label>
 
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold;">
-                <input type="checkbox" name="possui_glaucoma_ou_ocular" style="width: 16px; height: 16px;">
-                Possui glaucoma ou algum problema ocular?
-              </label>
+              <div class="question-row">
+                <span>Possui glaucoma ou algum problema ocular?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="possui_glaucoma_ou_ocular" value="sim"> Sim</label>
+                  <label><input type="radio" name="possui_glaucoma_ou_ocular" value="nao"> Não</label>
+                </div>
+              </div>
               <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, explique:
                 <input type="text" name="glaucoma_ocular_qual" placeholder="Explique o problema ocular" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
               </label>
 
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold;">
-                <input type="checkbox" name="esta_em_tratamento" style="width: 16px; height: 16px;">
-                Está em tratamento médico atualmente?
-              </label>
+              <div class="question-row">
+                <span>Está em tratamento médico atualmente?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="esta_em_tratamento" value="sim"> Sim</label>
+                  <label><input type="radio" name="esta_em_tratamento" value="nao"> Não</label>
+                </div>
+              </div>
 
               <label class="field" style="font-size: 12px; font-weight: bold;">Existe algum procedimento que julgue ser necessário informar ao profissional antes do procedimento?
                 <textarea name="informacoes_adicionais" rows="2" placeholder="Observações importantes" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;"></textarea>
