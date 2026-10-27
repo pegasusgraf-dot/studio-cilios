@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const apiBase = '/api';
   const storageKey = 'studio-cilios-user';
-  const defaultMasterEmail = 'prodrigosilvacel@gmail.com.br';
+  const defaultMasterEmail = 'prodrigosilvacel@gmail.com';
   const defaultMasterPassword = 'w18187';
 
   const authScreen = document.getElementById('auth-screen');
