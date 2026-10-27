@@ -108,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Renderizar métricas com suporte a filtro por data
   const renderMasterMetrics = async () => {
     const totalEl = document.getElementById('metric-total-atendimentos');
     const faturamentoEl = document.getElementById('metric-faturamento');
@@ -134,7 +133,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const filtrarBtn = document.getElementById('filtrar-metricas');
   if (filtrarBtn) {
-    filtrarBtn.addEventListener('click', renderMasterMetrics);
+    filtrarBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      renderMasterMetrics();
+      showToast('Filtro aplicado!');
+    });
   }
 
   const setActiveView = (viewName) => {
@@ -310,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await apiFetch(`/agendamentos/${id}/concluir`, { method: 'PATCH' });
       showToast('Atendimento concluído com sucesso!');
       await renderAppointments();
+      await renderMasterMetrics();
     } catch (error) {
       showToast(error.message || 'Erro ao concluir atendimento', true);
     }
@@ -469,7 +473,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (appointmentForm) {
-    // Insere campo dinâmico de nome do cliente caso seja Master
     if (currentUser?.tipo === 'master' && !document.getElementById('custom-client-name')) {
       const container = document.createElement('label');
       container.className = 'field';
