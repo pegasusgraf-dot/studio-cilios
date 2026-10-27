@@ -9,31 +9,6 @@ const PORT = Number(process.env.PORT) || 3000;
 const SESSION_MAX_AGE = 8 * 60 * 60 * 1000;
 const SESSION_SECRET = (process.env.SESSION_SECRET || 'studio-cilios-secret-dev').trim();
 
-// Rota de Estatísticas e Métricas Financeiras (Apenas Master)
-app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM appointments');
-    const appointments = result.rows;
-
-    const totalAtendimentos = appointments.length;
-    let faturamentoTotal = 0;
-
-    appointments.forEach((apt) => {
-      faturamentoTotal += Number(apt.valor || 0);
-    });
-
-    const mediaFaturamentoPorAtendimento = totalAtendimentos > 0 ? faturamentoTotal / totalAtendimentos : 0;
-
-    res.json({
-      totalAtendimentos,
-      faturamentoTotal: faturamentoTotal.toFixed(2),
-      mediaFaturamentoPorAtendimento: mediaFaturamentoPorAtendimento.toFixed(2)
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ mensagem: 'Erro ao calcular métricas.' });
-  }
-});
 // Configuração da conexão com o Neon PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_UE6cZYrpv5Gh@ep-wispy-waterfall-b8z771b8-pooler.c-14.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
@@ -356,6 +331,32 @@ app.delete('/api/agendamentos/:id', requireAuth, async (req, res) => {
   }
 });
 
+// Rota de Estatísticas e Métricas Financeiras (Apenas Master)
+app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM appointments');
+    const appointments = result.rows;
+
+    const totalAtendimentos = appointments.length;
+    let faturamentoTotal = 0;
+
+    appointments.forEach((apt) => {
+      faturamentoTotal += Number(apt.valor || 0);
+    });
+
+    const mediaFaturamentoPorAtendimento = totalAtendimentos > 0 ? faturamentoTotal / totalAtendimentos : 0;
+
+    res.json({
+      totalAtendimentos,
+      faturamentoTotal: faturamentoTotal.toFixed(2),
+      mediaFaturamentoPorAtendimento: mediaFaturamentoPorAtendimento.toFixed(2)
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ mensagem: 'Erro ao calcular métricas.' });
+  }
+});
+
 app.get('/api/usuarios', requireAuth, requireMaster, async (req, res) => {
   try {
     const result = await pool.query('SELECT id, nome, email, tipo FROM users');
@@ -370,7 +371,7 @@ app.get('/api/usuarios', requireAuth, requireMaster, async (req, res) => {
   }
 });
 
-// Inicialização e criação das tabelas corrigidas no Neon
+// Inicialização e criação das tabelas no Neon
 const initDb = async () => {
   try {
     await pool.query(`
