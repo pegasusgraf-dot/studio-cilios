@@ -9,7 +9,6 @@ const PORT = Number(process.env.PORT) || 3000;
 const SESSION_MAX_AGE = 8 * 60 * 60 * 1000;
 const SESSION_SECRET = (process.env.SESSION_SECRET || 'studio-cilios-secret-dev').trim();
 
-// Configuração da conexão com o Neon PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_UE6cZYrpv5Gh@ep-wispy-waterfall-b8z771b8-pooler.c-14.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
   ssl: { rejectUnauthorized: false }
@@ -140,7 +139,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// ROTAS DE CLIENTES DETALHADOS (Apenas Master)
+// CLIENTES
 app.get('/api/clientes', requireAuth, requireMaster, async (req, res) => {
   try {
     const result = await pool.query('SELECT id, nome, email, data_nascimento, profissao, endereco, telefone, cpf FROM clients ORDER BY nome');
@@ -169,9 +168,8 @@ app.post('/api/clientes', requireAuth, requireMaster, async (req, res) => {
       'INSERT INTO clients (id, nome, email, data_nascimento, profissao, endereco, telefone, cpf) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
       [id, nome, email, data_nascimento, profissao, endereco, telefone, cpf]
     );
-    res.status(201).json({ id, nome, email, data_nascimento, profissao, endereco, telefone, cpf });
+    res.status(201).json({ id, nome });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ mensagem: 'Erro ao cadastrar cliente.' });
   }
 });
@@ -179,6 +177,7 @@ app.post('/api/clientes', requireAuth, requireMaster, async (req, res) => {
 app.delete('/api/clientes/:id', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
+    await pool.query('DELETE FROM client_fichas WHERE cliente_id = $1', [id]);
     const result = await pool.query('DELETE FROM clients WHERE id = $1 RETURNING *', [id]);
     if (result.rows.length === 0) return res.status(404).json({ mensagem: 'Cliente não encontrado.' });
     res.json({ mensagem: 'Cliente removido com sucesso.' });
@@ -187,14 +186,80 @@ app.delete('/api/clientes/:id', requireAuth, requireMaster, async (req, res) => 
   }
 });
 
-// Histórico de atendimentos do cliente
+// FICHA DE PROCEDIMENTO / ANAMNESE POR CLIENTE
+app.get('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res) => {
+  const clienteId = String(req.params.id || '').trim();
+  try {
+    const result = await pool.query('SELECT * FROM client_fichas WHERE cliente_id = $1', [clienteId]);
+    res.json(result.rows[0] || null);
+  } catch (err) {
+    res.status(500).json({ mensagem: 'Erro ao buscar ficha.' });
+  }
+});
+
+app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res) => {
+  const clienteId = String(req.params.id || '').trim();
+  const {
+    usa_rimel,
+    procedimento_recente_olhos,
+    possui_alergia,
+    alergia_qual,
+    possui_glaucoma_ou_ocular,
+    glaucoma_ocular_qual,
+    esta_em_tratamento,
+    informacoes_adicionais,
+    mapping,
+    estilo,
+    modelo_fios,
+    espessura,
+    curvatura,
+    adesivo_cola
+  } = req.body;
+
+  try {
+    const existe = await pool.query('SELECT id FROM client_fichas WHERE cliente_id = $1', [clienteId]);
+    if (existe.rows.length > 0) {
+      await pool.query(
+        `UPDATE client_fichas SET 
+         usa_rimel = $1, procedimento_recente_olhos = $2, possui_alergia = $3, alergia_qual = $4, 
+         possui_glaucoma_ou_ocular = $5, glaucoma_ocular_qual = $6, esta_em_tratamento = $7, 
+         informacoes_adicionais = $8, mapping = $9, estilo = $10, modelo_fios = $11, 
+         espessura = $12, curvatura = $13, adesivo_cola = $14, atualizado_em = NOW() 
+         WHERE cliente_id = $15`,
+        [
+          Boolean(usa_rimel), String(procedimento_recente_olhos || ''), Boolean(possui_alergia), String(alergia_qual || ''),
+          Boolean(possui_glaucoma_ou_ocular), String(glaucoma_ocular_qual || ''), Boolean(esta_em_tratamento), String(informacoes_adicionais || ''),
+          String(mapping || ''), String(estilo || ''), String(modelo_fios || ''), String(espessura || ''),
+          String(curvatura || ''), String(adesivo_cola || ''), clienteId
+        ]
+      );
+    } else {
+      const id = makeId('fich');
+      await pool.query(
+        `INSERT INTO client_fichas (id, cliente_id, usa_rimel, procedimento_recente_olhos, possui_alergia, alergia_qual, possui_glaucoma_ou_ocular, glaucoma_ocular_qual, esta_em_tratamento, informacoes_adicionais, mapping, estilo, modelo_fios, espessura, curvatura, adesivo_cola) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+        [
+          id, clienteId, Boolean(usa_rimel), String(procedimento_recente_olhos || ''), Boolean(possui_alergia), String(alergia_qual || ''),
+          Boolean(possui_glaucoma_ou_ocular), String(glaucoma_ocular_qual || ''), Boolean(esta_em_tratamento), String(informacoes_adicionais || ''),
+          String(mapping || ''), String(estilo || ''), String(modelo_fios || ''), String(espessura || ''),
+          String(curvatura || ''), String(adesivo_cola || '')
+        ]
+      );
+    }
+    res.json({ mensagem: 'Ficha salva com sucesso!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ mensagem: 'Erro ao salvar ficha.' });
+  }
+});
+
 app.get('/api/clientes/:nome/historico', requireAuth, requireMaster, async (req, res) => {
   const nomeCliente = decodeURIComponent(req.params.nome || '').trim();
   try {
     const result = await pool.query('SELECT * FROM appointments WHERE LOWER(usuario_nome) = LOWER($1) ORDER BY data_hora DESC', [nomeCliente]);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ mensagem: 'Erro ao buscar histórico do cliente.' });
+    res.status(500).json({ mensagem: 'Erro ao buscar histórico.' });
   }
 });
 
@@ -228,44 +293,13 @@ app.post('/api/servicos', requireAuth, requireMaster, async (req, res) => {
   }
 });
 
-app.put('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => {
-  const id = String(req.params.id || '').trim();
-  const nome = String(req.body.nome || '').trim();
-  const valor = Number(req.body.valor || 0);
-  const duracao_minutos = Number(req.body.duracao_minutos || 0);
-
-  if (!nome || !Number.isFinite(valor) || valor <= 0 || !Number.isFinite(duracao_minutos) || duracao_minutos <= 0) {
-    return res.status(400).json({ mensagem: 'Preencha nome, valor e duração válidos.' });
-  }
-
-  try {
-    const result = await pool.query(
-      'UPDATE services SET nome = $1, valor = $2, duracao_minutos = $3 WHERE id = $4 RETURNING *',
-      [nome, valor, duracao_minutos, id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ mensagem: 'Serviço não encontrado.' });
-    }
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ mensagem: 'Erro ao atualizar serviço.' });
-  }
-});
-
 app.delete('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
-
   try {
     await pool.query('DELETE FROM appointments WHERE servico_id = $1', [id]);
     const result = await pool.query('DELETE FROM services WHERE id = $1 RETURNING *', [id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ mensagem: 'Serviço não encontrado.' });
-    }
-
-    res.json({ mensagem: 'Serviço removido com sucesso.', item: result.rows[0] });
+    if (result.rows.length === 0) return res.status(404).json({ mensagem: 'Serviço não encontrado.' });
+    res.json({ mensagem: 'Serviço removido com sucesso.' });
   } catch (err) {
     res.status(500).json({ mensagem: 'Erro ao remover serviço.' });
   }
@@ -273,16 +307,13 @@ app.delete('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => 
 
 app.get('/api/agendamentos', requireAuth, async (req, res) => {
   const user = req.session.user;
-
   try {
     let query = 'SELECT * FROM appointments';
     let params = [];
-
     if (user.tipo !== 'master') {
       query += ' WHERE usuario_id = $1';
       params.push(user.id);
     }
-
     query += ' ORDER BY data_hora ASC';
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -306,30 +337,16 @@ app.post('/api/agendamentos', requireAuth, async (req, res) => {
   try {
     const servicoRes = await pool.query('SELECT * FROM services WHERE id = $1', [servico_id]);
     const service = servicoRes.rows[0];
-    if (!service) {
-      return res.status(404).json({ mensagem: 'Procedimento não encontrado.' });
-    }
+    if (!service) return res.status(404).json({ mensagem: 'Procedimento não encontrado.' });
 
     const id = makeId('apt');
-    const appointment = {
-      id,
-      servico_id: service.id,
-      servico_nome: service.nome,
-      valor: service.valor,
-      usuario_id: usuario_id,
-      usuario_nome: usuario_nome,
-      data_hora,
-      status: 'pendente'
-    };
-
     await pool.query(
       'INSERT INTO appointments (id, servico_id, servico_nome, valor, usuario_id, usuario_nome, data_hora, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-      [appointment.id, appointment.servico_id, appointment.servico_nome, appointment.valor, appointment.usuario_id, appointment.usuario_nome, appointment.data_hora, appointment.status]
+      [id, service.id, service.nome, service.valor, usuario_id, usuario_nome, data_hora, 'pendente']
     );
 
-    res.status(201).json(appointment);
+    res.status(201).json({ id });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ mensagem: 'Erro ao criar agendamento.' });
   }
 });
@@ -337,28 +354,22 @@ app.post('/api/agendamentos', requireAuth, async (req, res) => {
 app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
-    const result = await pool.query(
-      'UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *',
-      ['concluido', id]
-    );
+    const result = await pool.query('UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *', ['concluido', id]);
     if (result.rows.length === 0) return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
-    res.json({ mensagem: 'Atendimento concluído com sucesso!', appointment: result.rows[0] });
+    res.json({ mensagem: 'Atendimento concluído!' });
   } catch (err) {
-    res.status(500).json({ mensagem: 'Erro ao concluir atendimento.' });
+    res.status(500).json({ mensagem: 'Erro ao concluir.' });
   }
 });
 
 app.patch('/api/agendamentos/:id/cancelar', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
-    const result = await pool.query(
-      'UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *',
-      ['cancelado', id]
-    );
+    const result = await pool.query('UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *', ['cancelado', id]);
     if (result.rows.length === 0) return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
-    res.json({ mensagem: 'Atendimento cancelado (cliente não compareceu).', appointment: result.rows[0] });
+    res.json({ mensagem: 'Atendimento cancelado.' });
   } catch (err) {
-    res.status(500).json({ mensagem: 'Erro ao cancelar atendimento.' });
+    res.status(500).json({ mensagem: 'Erro ao cancelar.' });
   }
 });
 
@@ -367,7 +378,6 @@ app.delete('/api/agendamentos/:id', requireAuth, async (req, res) => {
   try {
     const aptRes = await pool.query('SELECT * FROM appointments WHERE id = $1', [id]);
     const appointment = aptRes.rows[0];
-
     if (!appointment) return res.status(404).json({ mensagem: 'Agendamento não encontrado.' });
 
     const canDelete = req.session.user.tipo === 'master' || req.session.user.id === appointment.usuario_id;
@@ -383,19 +393,15 @@ app.delete('/api/agendamentos/:id', requireAuth, async (req, res) => {
 app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => {
   const dataInicio = req.query.inicio;
   const dataFim = req.query.fim;
-
   try {
     let query = "SELECT * FROM appointments WHERE status = 'concluido'";
     let params = [];
-
     if (dataInicio && dataFim) {
       query += ' AND SUBSTRING(data_hora, 1, 10) >= $1 AND SUBSTRING(data_hora, 1, 10) <= $2';
       params.push(dataInicio, dataFim);
     }
-
     const result = await pool.query(query, params);
     const appointments = result.rows;
-
     const totalAtendimentos = appointments.length;
     let faturamentoTotal = 0;
     appointments.forEach((apt) => { faturamentoTotal += Number(apt.valor || 0); });
@@ -449,6 +455,26 @@ const initDb = async () => {
         endereco TEXT,
         telefone VARCHAR(50),
         cpf VARCHAR(50)
+      );
+
+      CREATE TABLE IF NOT EXISTS client_fichas (
+        id VARCHAR(64) PRIMARY KEY,
+        cliente_id VARCHAR(64) UNIQUE,
+        usa_rimel BOOLEAN DEFAULT false,
+        procedimento_recente_olhos TEXT,
+        possui_alergia BOOLEAN DEFAULT false,
+        alergia_qual TEXT,
+        possui_glaucoma_ou_ocular BOOLEAN DEFAULT false,
+        glaucoma_ocular_qual TEXT,
+        esta_em_tratamento BOOLEAN DEFAULT false,
+        informacoes_adicionais TEXT,
+        mapping TEXT,
+        estilo TEXT,
+        modelo_fios TEXT,
+        espessura TEXT,
+        curvatura TEXT,
+        adesivo_cola TEXT,
+        atualizado_em TIMESTAMP DEFAULT NOW()
       );
     `);
 
