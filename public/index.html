@@ -209,4 +209,183 @@
         <section class="stats-row" aria-label="Resumo da agenda">
           <article class="stat-block">
             <span class="stat-label">SERVIÇOS DISPONÍVEIS</span>
-            <strong id
+            <strong id="stat-services">0</strong>
+            <span class="stat-foot">procedimentos cadastrados</span>
+          </article>
+          <article class="stat-block">
+            <span class="stat-label">MEUS AGENDAMENTOS</span>
+            <strong id="stat-mine">0</strong>
+            <span class="stat-foot">na agenda</span>
+          </article>
+          <article class="stat-block stat-accent">
+            <span class="stat-label">PRÓXIMO HORÁRIO</span>
+            <strong id="stat-next">—</strong>
+            <span class="stat-foot" id="stat-next-detail">Nenhum agendamento futuro</span>
+          </article>
+        </section>
+
+        <section class="view-panel is-visible" id="agenda-view">
+          <div class="agenda-layout">
+            <section class="booking-panel card">
+              <div class="panel-heading">
+                <span class="panel-icon">＋</span>
+                <div>
+                  <h3 id="booking-title">Novo Agendamento</h3>
+                  <p id="booking-description">Escolha o procedimento de beleza e o horário desejado.</p>
+                </div>
+              </div>
+
+              <form id="appointment-form" class="form-stack">
+                <label class="field">Procedimento
+                  <select id="service-select" name="servico_id" required>
+                    <option value="">Carregando serviços...</option>
+                  </select>
+                </label>
+                <label class="field">Data e Hora
+                  <input type="datetime-local" name="data_hora" required>
+                </label>
+
+                <div class="form-actions">
+                  <button id="reservation-submit" type="submit" class="button button-primary button-wide" style="background: #a855f7;">Confirmar agendamento <span aria-hidden="true">↗</span></button>
+                  <button id="cancel-edit" type="button" class="button button-secondary button-wide" hidden>Cancelar edição</button>
+                </div>
+                <p class="form-message" id="appointment-message" role="status"></p>
+              </form>
+            </section>
+
+            <section class="reservations-panel card">
+              <div class="filter-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Horários Marcados</h3>
+                <label class="filter-label">
+                  <select id="appointment-filter">
+                    <option value="todos">Todos os serviços</option>
+                  </select>
+                </label>
+              </div>
+              <div id="appointment-list" class="reservation-list items-list" aria-live="polite"></div>
+              <div id="empty-state" class="empty-state" hidden><span class="empty-symbol">▦</span><h3>Nenhum agendamento encontrado.</h3><p>Quando marcar um horário, ele aparecerá aqui.</p></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view-panel admin-only" id="cadastros-view" hidden>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">ADMINISTRAÇÃO MASTER</p>
+              <h2>Gerenciar Catálogo de Tratamentos</h2>
+            </div>
+            <span class="admin-badge"><span class="status-dot"></span> Acesso master</span>
+          </div>
+          <div class="management-grid">
+            <section class="management-panel card">
+              <div class="panel-heading">
+                <span class="panel-icon">⌂</span>
+                <div>
+                  <h3>Cadastrar Novo Tratamento / Serviço</h3>
+                  <p>Adicione procedimentos de cílios, defina valores em R$ e duração.</p>
+                </div>
+              </div>
+
+              <form id="service-form" class="form-stack compact-form">
+                <input type="hidden" name="id" id="service-id" value="">
+                <label class="field">Nome do Procedimento
+                  <input type="text" name="nome" required placeholder="Ex: Extensão Volume Russo">
+                </label>
+                <label class="field">Valor (R$)
+                  <input type="number" step="0.01" name="valor" required placeholder="120.00">
+                </label>
+                <label class="field">Duração (em minutos)
+                  <input type="number" name="duracao_minutos" required placeholder="90">
+                </label>
+                <div class="form-actions" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                  <button id="service-submit" type="submit" class="button button-primary" style="background: #a855f7;">Adicionar serviço <span aria-hidden="true">＋</span></button>
+                  <button id="service-cancel" type="button" class="button button-secondary" hidden>Cancelar edição</button>
+                </div>
+                <p class="form-message" id="service-message" role="status"></p>
+              </form>
+            </section>
+
+            <section class="management-panel card">
+              <div class="panel-heading">
+                <div>
+                  <h3>Tratamentos Cadastrados</h3>
+                  <p>Lista de todos os procedimentos ativos no studio.</p>
+                </div>
+              </div>
+              <div class="management-list items-list" id="service-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- PAINEL DE MÉTRICAS MASTER COM FILTRO POR DATA -->
+        <section class="view-panel admin-only" id="metricas-view" hidden>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">RELATÓRIO FINANCEIRO & MÉTRICAS</p>
+              <h2>Desempenho de Atendimentos</h2>
+            </div>
+            <span class="admin-badge"><span class="status-dot"></span> Restrito Master</span>
+          </div>
+
+          <div class="card" style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <label style="font-size: 12px; font-weight: bold; color: #333;">Data Início:
+              <input type="date" id="filtro-inicio" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da; margin-top: 5px; display: block;">
+            </label>
+            <label style="font-size: 12px; font-weight: bold; color: #333;">Data Fim:
+              <input type="date" id="filtro-fim" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da; margin-top: 5px; display: block;">
+            </label>
+            <button type="button" id="filtrar-metricas" class="button button-primary" style="background: #a855f7; margin-top: 15px; padding: 9px 15px; border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">Filtrar Período</button>
+          </div>
+          
+          <div class="stats-row" style="margin-top: 20px;">
+            <article class="stat-block">
+              <span class="stat-label">TOTAL DE ATENDIMENTOS CONCLUÍDOS</span>
+              <strong id="metric-total-atendimentos">0</strong>
+              <span class="stat-foot">realizados no studio</span>
+            </article>
+            <article class="stat-block">
+              <span class="stat-label">FATURAMENTO TOTAL</span>
+              <strong id="metric-faturamento">R$ 0,00</strong>
+              <span class="stat-foot">acumulado</span>
+            </article>
+            <article class="stat-block stat-accent">
+              <span class="stat-label">MÉDIA POR ATENDIMENTO</span>
+              <strong id="metric-media">R$ 0,00</strong>
+              <span class="stat-foot">valor médio por procedimento</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="view-panel" id="cracha-view" hidden>
+          <div class="section-heading">
+            <div><p class="eyebrow">IDENTIFICAÇÃO</p><h2>Meu Crachá Digital</h2></div>
+          </div>
+          <div class="cracha-card">
+            <div id="qrcode"></div>
+            <p style="font-size: 11px; margin-top: 8px; color: #475569;">Escaneie para validar o perfil no studio</p>
+          </div>
+        </section>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </main>
+
+      <footer class="app-footer" style="text-align: center; padding: 1.5rem; display: block; font-size: 0.85rem; color: #64748b;">
+        <span>STUDIO DE CÍLIOS<span class="brand-period">.</span></span> — <span>Beleza que transforma o olhar.</span>
+      </footer>
+    </div>
+
+    <script>
+      const baseUrl = window.location.origin;
+      const linkPerfil = `${baseUrl}/perfil.html?id=studio-cliente`;
+
+      new QRCode(document.getElementById("qrcode"), {
+        text: linkPerfil,
+        width: 96,
+        height: 96,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    </script>
+  </body>
+</html>
