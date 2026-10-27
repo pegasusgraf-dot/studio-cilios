@@ -435,11 +435,4 @@ app.get('*', (req, res) => {
 });
 
 initDb().then(() => {
-  if (require.main === module) {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Studio de cílios rodando em http://localhost:${PORT}`);
-    });
-  }
-});
-
-module.exports = app;
+  if (
