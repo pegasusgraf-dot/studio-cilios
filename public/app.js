@@ -145,14 +145,19 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem(storageKey, JSON.stringify(user));
     fillAccount(user);
     updateAdminVisibility();
+    authScreen.hidden = true;
+    appScreen.hidden = false;
     setActiveView('agenda');
+    renderServices();
+    renderAppointments();
   };
 
   const clearSession = () => {
     currentUser = null;
     localStorage.removeItem(storageKey);
     updateAdminVisibility();
-    setActiveView('agenda');
+    authScreen.hidden = false;
+    appScreen.hidden = true;
   };
 
   const renderServices = async () => {
@@ -217,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (statMine) statMine.textContent = String(filtered.length || 0);
 
-      // Calcular o próximo agendamento futuro pendente
       const next = [...appointments]
         .filter(a => (a.status || 'pendente') === 'pendente' && new Date(a.data_hora).getTime() > Date.now())
         .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
@@ -303,8 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
       saveSession(res.usuario);
       showToast(`Bem-vinda, ${res.usuario.nome}!`);
-      renderServices();
-      renderAppointments();
     } catch (err) {
       setMessage(authMessage, err.message, true);
     }
@@ -353,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   logoutButton?.addEventListener('click', () => {
     clearSession();
-    showAuth();
     showToast('Sessão encerrada.');
   });
 
