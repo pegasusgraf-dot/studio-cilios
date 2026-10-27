@@ -44,7 +44,6 @@
               <input name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
             </label>
 
-            <!-- CAMPOS DE E-MAIL E SENHA AGORA VAZIOS (SEM VALOR PADRÃO) -->
             <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
               E-mail
               <input name="email" type="email" required placeholder="seu@email.com" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
@@ -75,6 +74,7 @@
         <nav class="main-nav">
           <button class="nav-link is-active" type="button" data-view="agenda">Agenda de Horários</button>
           <button class="nav-link admin-only" type="button" data-view="cadastros" hidden>Painel Master (Serviços) <span class="nav-count" id="admin-count">0</span></button>
+          <button class="nav-link admin-only" type="button" data-view="clientes" hidden>Cadastro de Clientes</button>
           <button class="nav-link admin-only" type="button" data-view="metricas" hidden>Relatório Financeiro</button>
           <button class="nav-link" type="button" data-view="cracha">Meu Crachá</button>
         </nav>
@@ -181,6 +181,46 @@
             </section>
             <section class="management-panel card">
               <div class="management-list items-list" id="service-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- NOVA ABA: CADASTRO DE CLIENTES -->
+        <section class="view-panel admin-only" id="clientes-view" hidden>
+          <div class="section-heading">
+            <h2>Gerenciamento & Histórico de Clientes</h2>
+          </div>
+          <div class="management-grid">
+            <section class="management-panel card">
+              <h3>Cadastrar Nova Cliente</h3>
+              <form id="client-form" class="form-stack compact-form" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                <label class="field">Nome completo
+                  <input type="text" name="nome" required placeholder="Nome da cliente" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <label class="field">Data de Nascimento
+                  <input type="date" name="data_nascimento" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <label class="field">Profissão
+                  <input type="text" name="profissao" placeholder="Profissão" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <label class="field">Endereço
+                  <input type="text" name="endereco" placeholder="Endereço completo" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <label class="field">Telefone
+                  <input type="text" name="telefone" placeholder="(00) 00000-0000" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <label class="field">E-mail
+                  <input type="email" name="email" placeholder="email@exemplo.com" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <label class="field">CPF
+                  <input type="text" name="cpf" placeholder="000.000.000-00" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <button type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-top: 5px;">Cadastrar Cliente</button>
+              </form>
+            </section>
+            <section class="management-panel card">
+              <h3>Clientes Cadastradas</h3>
+              <div class="management-list items-list" id="client-list" style="margin-top: 10px;"></div>
             </section>
           </div>
         </section>
