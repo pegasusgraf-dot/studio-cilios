@@ -386,7 +386,7 @@ const initDb = async () => {
       );
     `);
 
-    const masterEmail = 'prodrigosilvacel@gmail.com.br';
+    const masterEmail = 'prodrigosilvacel@gmail.com';
     const checkMaster = await pool.query('SELECT id FROM users WHERE email = $1', [masterEmail]);
     if (checkMaster.rows.length === 0) {
       const passwordHash = await bcrypt.hash('w18187', 10);
