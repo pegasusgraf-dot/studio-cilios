@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentUser = null;
   let authMode = 'login';
+  let registeredClients = []; // Armazena a lista de clientes para validação/auto-puxar
 
   const setMessage = (element, message, isError = false) => {
     if (!element) return;
@@ -122,6 +123,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateAdminVisibility = () => {
     const isMaster = currentUser?.tipo === 'master';
     document.querySelectorAll('.admin-only').forEach(el => el.hidden = !isMaster);
+    if (isMaster) loadRegisteredClients();
+  };
+
+  const loadRegisteredClients = async () => {
+    try {
+      registeredClients = await apiFetch('/clientes');
+      // Se for master, podemos transformar o input de nome em um datelist ou sugerir os cadastrados
+      if (currentUser?.tipo === 'master' && inputUsuarioNome) {
+        let datalist = document.getElementById('clientes-datalist');
+        if (!datalist) {
+          datalist = document.createElement('datalist');
+          datalist.id = 'clientes-datalist';
+          document.body.appendChild(datalist);
+          inputUsuarioNome.setAttribute('list', 'clientes-datalist');
+        }
+        datalist.innerHTML = '';
+        registeredClients.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.nome;
+          datalist.appendChild(opt);
+        });
+      }
+    } catch (e) {}
   };
 
   const fillAccount = (user) => {
@@ -137,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         inputUsuarioNome.value = '';
         inputUsuarioNome.readOnly = false;
-        inputUsuarioNome.placeholder = 'Nome da cliente';
+        inputUsuarioNome.placeholder = 'Digite ou selecione a cliente cadastrada';
       }
     }
   };
@@ -199,12 +223,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { console.error(e); }
   };
 
-  // CLIENTES E FICHA
   const renderClients = async () => {
     const listEl = document.getElementById('client-list');
     if (!listEl) return;
     try {
       const clients = await apiFetch('/clientes');
+      registeredClients = clients;
       listEl.innerHTML = clients.length ? '' : '<p>Nenhum cliente cadastrado.</p>';
       clients.forEach(c => {
         const card = document.createElement('div');
@@ -258,7 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fichaClienteId.value = cliente.id;
     fichaForm.reset();
 
-    // Buscar histórico de agendamentos e preencher
     const historicoBox = document.getElementById('ficha-historico-lista');
     historicoBox.innerHTML = 'Carregando histórico...';
 
@@ -278,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
       historicoBox.innerHTML = '<span style="color:red; font-size:12px;">Erro ao carregar histórico.</span>';
     }
 
-    // Buscar ficha salva anteriormente se houver
     try {
       const ficha = await apiFetch(`/clientes/${cliente.id}/ficha`);
       if (ficha) {
@@ -357,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       clientForm.reset();
       renderClients();
+      loadRegisteredClients();
       showToast('Cliente cadastrado com sucesso!');
     } catch (err) {
       showToast(err.message, true);
@@ -551,6 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
         authScreen.hidden = true;
         renderServices();
         renderAppointments();
+        loadRegisteredClients();
         return;
       }
     } catch (e) {}
