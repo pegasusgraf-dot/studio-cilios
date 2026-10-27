@@ -471,3 +471,165 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!email || !senha) {
+          throw new Error('E-mail e senha são obrigatórios.');
+        }
+
+        const result = await apiFetch('/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, senha }),
+        });
+
+        saveSession(result.usuario);
+        showApp();
+        showToast(`Bem-vindo(a), ${result.usuario?.nome || 'cliente'}!`);
+        authForm.reset();
+
+        await renderServices();
+        await renderAppointments();
+      } catch (error) {
+        setMessage(authMessage, error.message || 'Não foi possível continuar.', true);
+        showToast(error.message || 'Erro ao autenticar', true);
+      }
+    });
+  }
+
+  if (serviceForm) {
+    serviceForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(serviceForm);
+      const id = String(formData.get('id') || '').trim();
+      const nome = String(formData.get('nome') || '').trim();
+      const valor = Number(formData.get('valor') || 0);
+      const duracao_minutos = Number(formData.get('duracao_minutos') || 0);
+      const status = document.getElementById('service-message');
+
+      try {
+        if (!nome || !valor || !duracao_minutos) {
+          throw new Error('Preencha nome, valor e duração.');
+        }
+
+        if (id) {
+          await apiFetch(`/servicos/${encodeURIComponent(id)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ nome, valor, duracao_minutos }),
+          });
+          setMessage(status, 'Serviço atualizado com sucesso!', false);
+        } else {
+          await apiFetch('/servicos', {
+            method: 'POST',
+            body: JSON.stringify({ nome, valor, duracao_minutos }),
+          });
+          setMessage(status, 'Serviço salvo com sucesso!', false);
+        }
+
+        serviceForm.reset();
+        setServiceFormMode();
+        await renderServices();
+      } catch (error) {
+        setMessage(status, error.message || 'Erro ao salvar serviço.', true);
+      }
+    });
+
+    if (serviceCancelButton) {
+      serviceCancelButton.addEventListener('click', () => {
+        const status = document.getElementById('service-message');
+        serviceForm.reset();
+        setServiceFormMode();
+        setMessage(status, 'Edição cancelada.', false);
+      });
+    }
+  }
+
+  if (appointmentForm) {
+    appointmentForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(appointmentForm);
+      const servico_id = String(formData.get('servico_id') || '').trim();
+      const data_hora = String(formData.get('data_hora') || '').trim();
+      const status = document.getElementById('appointment-message');
+
+      try {
+        if (!servico_id || !data_hora) {
+          throw new Error('Selecione um procedimento e informe a data/hora.');
+        }
+
+        await apiFetch('/agendamentos', {
+          method: 'POST',
+          body: JSON.stringify({
+            servico_id,
+            data_hora,
+            usuario_id: currentUser?.id || null,
+          }),
+        });
+
+        appointmentForm.reset();
+        setMessage(status, 'Agendamento criado com sucesso!', false);
+        await renderAppointments();
+      } catch (error) {
+        setMessage(status, error.message || 'Erro ao criar agendamento.', true);
+      }
+    });
+  }
+
+  if (logoutButton) {
+    logoutButton.addEventListener('click', () => {
+      clearSession();
+      showAuth();
+      setAuthMode('login');
+
+      if (authForm) {
+        authForm.reset();
+        const emailInput = authForm.querySelector('input[name="email"]');
+        const passwordInput = authForm.querySelector('input[name="senha"]');
+        if (emailInput) emailInput.value = defaultMasterEmail;
+        if (passwordInput) passwordInput.value = defaultMasterPassword;
+      }
+
+      showToast('Sessão encerrada.');
+    });
+  }
+
+  if (appointmentFilter) {
+    appointmentFilter.addEventListener('change', renderAppointments);
+  }
+
+  const boot = async () => {
+    setAuthMode('login');
+    setServiceFormMode();
+    setActiveView('agenda');
+
+    if (authForm) {
+      const emailInput = authForm.querySelector('input[name="email"]');
+      const passwordInput = authForm.querySelector('input[name="senha"]');
+      if (emailInput) emailInput.value = defaultMasterEmail;
+      if (passwordInput) passwordInput.value = defaultMasterPassword;
+    }
+
+    try {
+      const savedUser = localStorage.getItem(storageKey);
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          if (parsed && parsed.id) {
+            currentUser = parsed;
+            fillAccount(currentUser);
+            updateAdminVisibility();
+            showApp();
+            await renderServices();
+            await renderAppointments();
+            return;
+          }
+        } catch (error) {
+          console.warn('Sessão inválida:', error);
+        }
+      }
+
+      clearSession();
+      showAuth();
+    } catch (error) {
+      console.error('Erro no bootstrap da UI:', error);
+    }
+  };
+
+  boot();
+});
