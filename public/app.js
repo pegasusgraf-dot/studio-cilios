@@ -1,21 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
   const apiBase = '/api';
   const storageKey = 'studio-cilios-user';
-  const defaultMasterEmail = 'prodrigosilvacel@gmail.com';
-  const defaultMasterPassword = 'w18187';
 
   const authScreen = document.getElementById('auth-screen');
   const appScreen = document.getElementById('app-screen');
   const authForm = document.getElementById('auth-form');
   const authEyebrow = document.getElementById('auth-eyebrow');
   const authTitle = document.getElementById('auth-title');
-  const authDescription = document.getElementById('auth-description');
   const authMessage = document.getElementById('auth-message');
   const nameField = document.getElementById('name-field');
   const serviceForm = document.getElementById('service-form');
-  const serviceIdInput = document.getElementById('service-id');
-  const serviceSubmitButton = document.getElementById('service-submit');
-  const serviceCancelButton = document.getElementById('service-cancel');
   const appointmentForm = document.getElementById('appointment-form');
   const serviceSelect = document.getElementById('service-select');
   const appointmentFilter = document.getElementById('appointment-filter');
@@ -27,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const navButtons = document.querySelectorAll('.nav-link');
   const viewPanels = document.querySelectorAll('.view-panel');
   const inputUsuarioNome = document.getElementById('input-usuario-nome');
+  
+  const clientForm = document.getElementById('client-form');
 
   let currentUser = null;
   let authMode = 'login';
@@ -115,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       panel.classList.toggle('is-visible', isVisible);
     });
     if (viewName === 'metricas') renderMasterMetrics();
+    if (viewName === 'clientes') renderClients();
   };
 
   const updateAdminVisibility = () => {
@@ -186,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
           row.innerHTML = `<div><strong>${s.nome}</strong><div class="muted">${formatCurrency(s.valor)} • ${s.duracao_minutos} min</div></div>
             <button class="button button-danger" data-id="${s.id}">Excluir</button>`;
           row.querySelector('button').addEventListener('click', async () => {
-            if (confirm('Deseja excluir?')) {
+            if (confirm('Deseja excluir este serviço?')) {
               await apiFetch(`/servicos/${s.id}`, { method: 'DELETE' });
               renderServices();
             }
@@ -197,6 +194,105 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { console.error(e); }
   };
 
+  // GERENCIAMENTO DE CLIENTES E HISTÓRICO
+  const renderClients = async () => {
+    const listEl = document.getElementById('client-list');
+    if (!listEl) return;
+    try {
+      const clients = await apiFetch('/clientes');
+      listEl.innerHTML = clients.length ? '' : '<p>Nenhum cliente cadastrado.</p>';
+      clients.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'service-item';
+        card.style.flexDirection = 'column';
+        card.style.alignItems = 'flex-start';
+        card.style.gap = '8px';
+
+        card.innerHTML = `
+          <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+            <strong>${c.nome}</strong>
+            <div style="display: flex; gap: 6px;">
+              <button class="button" data-action="historico" style="background: #3b82f6; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Histórico</button>
+              <button class="button button-danger" data-action="excluir" style="background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Excluir</button>
+            </div>
+          </div>
+          <div class="muted" style="font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%;">
+            <span><strong>CPF:</strong> ${c.cpf || '—'}</span>
+            <span><strong>Tel:</strong> ${c.telefone || '—'}</span>
+            <span><strong>Nascimento:</strong> ${c.data_nascimento || '—'}</span>
+            <span><strong>Profissão:</strong> ${c.profissao || '—'}</span>
+            <span style="grid-column: span 2;"><strong>Endereço:</strong> ${c.endereco || '—'}</span>
+            <span style="grid-column: span 2;"><strong>E-mail:</strong> ${c.email || '—'}</span>
+          </div>
+          <div class="client-history-box" data-history-container="${c.nome}" style="width: 100%; margin-top: 8px; background: #f8fafc; padding: 8px; border-radius: 6px; display: none;"></div>
+        `;
+
+        card.querySelector('[data-action="excluir"]').addEventListener('click', async () => {
+          if (confirm(`Deseja excluir o cadastro de ${c.nome}?`)) {
+            try {
+              await apiFetch(`/clientes/${c.id}`, { method: 'DELETE' });
+              showToast('Cliente removido!');
+              renderClients();
+            } catch (err) {
+              showToast(err.message, true);
+            }
+          }
+        });
+
+        card.querySelector('[data-action="historico"]').addEventListener('click', async () => {
+          const box = card.querySelector(`[data-history-container="${c.nome}"]`);
+          if (box.style.display === 'block') {
+            box.style.display = 'none';
+            return;
+          }
+          box.style.display = 'block';
+          box.innerHTML = '<span class="muted">Carregando histórico...</span>';
+          try {
+            const hist = await apiFetch(`/clientes/${encodeURIComponent(c.nome)}/historico`);
+            if (!hist.length) {
+              box.innerHTML = '<span class="muted" style="font-size:11px;">Nenhum atendimento registrado para esta cliente.</span>';
+              return;
+            }
+            let html = '<strong style="font-size: 11px; display:block; margin-bottom: 4px;">Histórico de Atendimentos:</strong><ul style="margin:0; padding-left:15px; font-size:11px;">';
+            hist.forEach(h => {
+              html += `<li>${formatDateTime(h.data_hora)} — <strong>${h.servico_nome}</strong> (${formatCurrency(h.valor)}) [Status: ${h.status}]</li>`;
+            });
+            html += '</ul>';
+            box.innerHTML = html;
+          } catch (e) {
+            box.innerHTML = '<span style="color:red; font-size:11px;">Erro ao carregar histórico.</span>';
+          }
+        });
+
+        listEl.appendChild(card);
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  clientForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(clientForm);
+    try {
+      await apiFetch('/clientes', {
+        method: 'POST',
+        body: JSON.stringify({
+          nome: formData.get('nome'),
+          email: formData.get('email'),
+          data_nascimento: formData.get('data_nascimento'),
+          profissao: formData.get('profissao'),
+          endereco: formData.get('endereco'),
+          telefone: formData.get('telefone'),
+          cpf: formData.get('cpf')
+        })
+      });
+      clientForm.reset();
+      renderClients();
+      showToast('Cliente cadastrado com sucesso!');
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+
   const alterarStatusAtendimento = async (id, acao) => {
     try {
       await apiFetch(`/agendamentos/${id}/${acao}`, { method: 'PATCH' });
@@ -205,6 +301,18 @@ document.addEventListener('DOMContentLoaded', () => {
       await renderMasterMetrics();
     } catch (e) {
       showToast(e.message || 'Erro ao atualizar atendimento', true);
+    }
+  };
+
+  const excluirAgendamento = async (id) => {
+    if (!confirm('Deseja realmente excluir este agendamento?')) return;
+    try {
+      await apiFetch(`/agendamentos/${id}`, { method: 'DELETE' });
+      showToast('Agendamento excluído!');
+      await renderAppointments();
+      await renderMasterMetrics();
+    } catch (e) {
+      showToast(e.message || 'Erro ao excluir agendamento', true);
     }
   };
 
@@ -259,17 +367,19 @@ document.addEventListener('DOMContentLoaded', () => {
                   Status: ${status.toUpperCase()}
                 </div>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center;">
+              <div style="display: flex; gap: 6px; align-items: center;">
                 <div class="value-badge">${formatCurrency(apt.valor)}</div>
                 ${isMaster && status === 'pendente' ? `
                   <button class="button" data-action="concluir" data-id="${apt.id}" style="background:#16a34a; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Concluir</button>
                   <button class="button" data-action="cancelar" data-id="${apt.id}" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Não veio</button>
                 ` : ''}
+                <button class="button button-danger" data-action="excluir" data-id="${apt.id}" style="background:#64748b; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Excluir</button>
               </div>
             `;
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'concluir'));
             row.querySelector('[data-action="cancelar"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'cancelar'));
+            row.querySelector('[data-action="excluir"]').addEventListener('click', () => excluirAgendamento(apt.id));
 
             listEl.appendChild(row);
           });
@@ -281,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-auth-mode]').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
 
   navButtons.forEach(btn => btn.addEventListener('click', () => {
-    if ((btn.dataset.view === 'cadastros' || btn.dataset.view === 'metricas') && currentUser?.tipo !== 'master') {
+    if ((btn.dataset.view === 'cadastros' || btn.dataset.view === 'metricas' || btn.dataset.view === 'clientes') && currentUser?.tipo !== 'master') {
       showToast('Acesso restrito ao master.', true);
       return;
     }
