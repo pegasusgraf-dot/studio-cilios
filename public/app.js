@@ -227,7 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           `;
 
-          // Botão Editar Tratamento
           row.querySelector('[data-action="editar"]').addEventListener('click', () => {
             serviceIdInput.value = s.id;
             serviceForm.nome.value = s.nome;
@@ -238,7 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           });
 
-          // Botão Excluir Tratamento
           row.querySelector('[data-action="excluir"]').addEventListener('click', async () => {
             if (confirm(`Deseja excluir o procedimento "${s.nome}"?`)) {
               try {
@@ -367,13 +365,24 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const ficha = await apiFetch(`/clientes/${cliente.id}/ficha`);
       if (ficha) {
-        fichaForm.usa_rimel.checked = ficha.usa_rimel;
-        fichaForm.procedimento_recente_olhos.value = ficha.procedimento_recente_olhos || '';
-        fichaForm.possui_alergia.checked = ficha.possui_alergia;
+        const setRadio = (name, val) => {
+          if (!val) return;
+          const radio = fichaForm.querySelector(`input[name="${name}"][value="${val}"]`);
+          if (radio) radio.checked = true;
+        };
+
+        setRadio('usa_rimel', ficha.usa_rimel);
+        setRadio('problemas_tireoide', ficha.problemas_tireoide);
+        setRadio('possui_diabetes', ficha.possui_diabetes);
+        setRadio('gestante', ficha.gestante);
+        setRadio('procedimento_recente_olhos', ficha.procedimento_recente_olhos);
+        setRadio('possui_alergia', ficha.possui_alergia);
+        setRadio('possui_glaucoma_ou_ocular', ficha.possui_glaucoma_ou_ocular);
+        setRadio('esta_em_tratamento', ficha.esta_em_tratamento);
+
+        fichaForm.procedimento_recente_olhos_qual.value = ficha.procedimento_recente_olhos_qual || '';
         fichaForm.alergia_qual.value = ficha.alergia_qual || '';
-        fichaForm.possui_glaucoma_ou_ocular.checked = ficha.possui_glaucoma_ou_ocular;
         fichaForm.glaucoma_ocular_qual.value = ficha.glaucoma_ocular_qual || '';
-        fichaForm.esta_em_tratamento.checked = ficha.esta_em_tratamento;
         fichaForm.informacoes_adicionais.value = ficha.informacoes_adicionais || '';
         fichaForm.mapping.value = ficha.mapping || '';
         fichaForm.estilo.value = ficha.estilo || '';
@@ -395,14 +404,24 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const clienteId = fichaClienteId.value;
     const formData = new FormData(fichaForm);
+
+    const getRadioVal = (name) => {
+      const checked = fichaForm.querySelector(`input[name="${name}"]:checked`);
+      return checked ? checked.value : '';
+    };
+
     const data = {
-      usa_rimel: formData.get('usa_rimel') === 'on',
-      procedimento_recente_olhos: formData.get('procedimento_recente_olhos'),
-      possui_alergia: formData.get('possui_alergia') === 'on',
+      usa_rimel: getRadioVal('usa_rimel'),
+      problemas_tireoide: getRadioVal('problemas_tireoide'),
+      possui_diabetes: getRadioVal('possui_diabetes'),
+      gestante: getRadioVal('gestante'),
+      procedimento_recente_olhos: getRadioVal('procedimento_recente_olhos'),
+      procedimento_recente_olhos_qual: formData.get('procedimento_recente_olhos_qual'),
+      possui_alergia: getRadioVal('possui_alergia'),
       alergia_qual: formData.get('alergia_qual'),
-      possui_glaucoma_ou_ocular: formData.get('possui_glaucoma_ou_ocular') === 'on',
+      possui_glaucoma_ou_ocular: getRadioVal('possui_glaucoma_ou_ocular'),
       glaucoma_ocular_qual: formData.get('glaucoma_ocular_qual'),
-      esta_em_tratamento: formData.get('esta_em_tratamento') === 'on',
+      esta_em_tratamento: getRadioVal('esta_em_tratamento'),
       informacoes_adicionais: formData.get('informacoes_adicionais'),
       mapping: formData.get('mapping'),
       estilo: formData.get('estilo'),
