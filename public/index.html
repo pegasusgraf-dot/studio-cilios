@@ -184,6 +184,8 @@
         <nav class="main-nav" aria-label="Navegação principal">
           <button class="nav-link is-active" type="button" data-view="agenda">Agenda de Horários</button>
           <button class="nav-link admin-only" type="button" data-view="cadastros" hidden>Painel Master (Serviços) <span class="nav-count" id="admin-count">0</span></button>
+          <!-- NOVO BOTÃO MASTER PARA MÉTRICAS -->
+          <button class="nav-link admin-only" type="button" data-view="metricas" hidden>Relatório Financeiro</button>
           <button class="nav-link" type="button" data-view="cracha">Meu Crachá</button>
         </nav>
 
@@ -313,6 +315,35 @@
               </div>
               <div class="management-list items-list" id="service-list"></div>
             </section>
+          </div>
+        </section>
+
+        <!-- NOVO PAINEL DE MÉTRICAS MASTER -->
+        <section class="view-panel admin-only" id="metricas-view" hidden>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">RELATÓRIO FINANCEIRO & MÉTRICAS</p>
+              <h2>Desempenho de Atendimentos</h2>
+            </div>
+            <span class="admin-badge"><span class="status-dot"></span> Restrito Master</span>
+          </div>
+          
+          <div class="stats-row" style="margin-top: 20px;">
+            <article class="stat-block">
+              <span class="stat-label">TOTAL DE ATENDIMENTOS</span>
+              <strong id="metric-total-atendimentos">0</strong>
+              <span class="stat-foot">realizados no studio</span>
+            </article>
+            <article class="stat-block">
+              <span class="stat-label">FATURAMENTO TOTAL</span>
+              <strong id="metric-faturamento">R$ 0,00</strong>
+              <span class="stat-foot">acumulado</span>
+            </article>
+            <article class="stat-block stat-accent">
+              <span class="stat-label">MÉDIA POR ATENDIMENTO</span>
+              <strong id="metric-media">R$ 0,00</strong>
+              <span class="stat-foot">valor médio por procedimento</span>
+            </article>
           </div>
         </section>
 
