@@ -379,16 +379,16 @@ document.addEventListener('DOMContentLoaded', () => {
         setRadio('possui_glaucoma_ou_ocular', ficha.possui_glaucoma_ou_ocular);
         setRadio('esta_em_tratamento', ficha.esta_em_tratamento);
 
-        fichaForm.procedimento_recente_olhos_qual.value = ficha.procedimento_recente_olhos_qual || '';
-        fichaForm.alergia_qual.value = ficha.alergia_qual || '';
-        fichaForm.glaucoma_ocular_qual.value = ficha.glaucoma_ocular_qual || '';
-        fichaForm.informacoes_adicionais.value = ficha.informacoes_adicionais || '';
-        fichaForm.mapping.value = ficha.mapping || '';
-        fichaForm.estilo.value = ficha.estilo || '';
-        fichaForm.modelo_fios.value = ficha.modelo_fios || '';
-        fichaForm.espessura.value = ficha.espessura || '';
-        fichaForm.curvatura.value = ficha.curvatura || '';
-        fichaForm.adesivo_cola.value = ficha.adesivo_cola || '';
+        if (fichaForm.procedimento_recente_olhos_qual) fichaForm.procedimento_recente_olhos_qual.value = ficha.procedimento_recente_olhos_qual || '';
+        if (fichaForm.alergia_qual) fichaForm.alergia_qual.value = ficha.alergia_qual || '';
+        if (fichaForm.glaucoma_ocular_qual) fichaForm.glaucoma_ocular_qual.value = ficha.glaucoma_ocular_qual || '';
+        if (fichaForm.informacoes_adicionais) fichaForm.informacoes_adicionais.value = ficha.informacoes_adicionais || '';
+        if (fichaForm.mapping) fichaForm.mapping.value = ficha.mapping || '';
+        if (fichaForm.estilo) fichaForm.estilo.value = ficha.estilo || '';
+        if (fichaForm.modelo_fios) fichaForm.modelo_fios.value = ficha.modelo_fios || '';
+        if (fichaForm.espessura) fichaForm.espessura.value = ficha.espessura || '';
+        if (fichaForm.curvatura) fichaForm.curvatura.value = ficha.curvatura || '';
+        if (fichaForm.adesivo_cola) fichaForm.adesivo_cola.value = ficha.adesivo_cola || '';
       }
     } catch (e) {}
 
@@ -402,6 +402,12 @@ document.addEventListener('DOMContentLoaded', () => {
   fichaForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const clienteId = fichaClienteId.value;
+    
+    if (!clienteId) {
+      showToast('Erro: ID do cliente não encontrado.', true);
+      return;
+    }
+
     const formData = new FormData(fichaForm);
 
     const getRadioVal = (name) => {
@@ -415,19 +421,19 @@ document.addEventListener('DOMContentLoaded', () => {
       possui_diabetes: getRadioVal('possui_diabetes'),
       gestante: getRadioVal('gestante'),
       procedimento_recente_olhos: getRadioVal('procedimento_recente_olhos'),
-      procedimento_recente_olhos_qual: formData.get('procedimento_recente_olhos_qual'),
+      procedimento_recente_olhos_qual: formData.get('procedimento_recente_olhos_qual') || '',
       possui_alergia: getRadioVal('possui_alergia'),
-      alergia_qual: formData.get('alergia_qual'),
+      alergia_qual: formData.get('alergia_qual') || '',
       possui_glaucoma_ou_ocular: getRadioVal('possui_glaucoma_ou_ocular'),
-      glaucoma_ocular_qual: formData.get('glaucoma_ocular_qual'),
+      glaucoma_ocular_qual: formData.get('glaucoma_ocular_qual') || '',
       esta_em_tratamento: getRadioVal('esta_em_tratamento'),
-      informacoes_adicionais: formData.get('informacoes_adicionais'),
-      mapping: formData.get('mapping'),
-      estilo: formData.get('estilo'),
-      modelo_fios: formData.get('modelo_fios'),
-      espessura: formData.get('espessura'),
-      curvatura: formData.get('curvatura'),
-      adesivo_cola: formData.get('adesivo_cola')
+      informacoes_adicionais: formData.get('informacoes_adicionais') || '',
+      mapping: formData.get('mapping') || '',
+      estilo: formData.get('estilo') || '',
+      modelo_fios: formData.get('modelo_fios') || '',
+      espessura: formData.get('espessura') || '',
+      curvatura: formData.get('curvatura') || '',
+      adesivo_cola: formData.get('adesivo_cola') || ''
     };
 
     try {
@@ -438,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Ficha de atendimento salva com sucesso!');
       fichaModal.style.display = 'none';
     } catch (err) {
-      showToast(err.message, true);
+      showToast(err.message || 'Erro ao salvar ficha', true);
     }
   });
 
