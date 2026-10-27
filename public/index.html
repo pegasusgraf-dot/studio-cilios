@@ -37,22 +37,27 @@
         <div class="auth-box" style="width: 100%; max-width: 380px;">
           <p class="eyebrow" id="auth-eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #666; font-weight: bold;">BEM-VINDA DE VOLTA</p>
           <h2 id="auth-title" style="font-size: 24px; margin: 5px 0 8px 0; color: #111;">Acesse sua conta</h2>
+          
           <form id="auth-form" class="form-stack" style="display: flex; flex-direction: column; gap: 15px;">
             <label class="field" id="name-field" hidden style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
               Nome completo
               <input name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
             </label>
+
+            <!-- CAMPOS DE E-MAIL E SENHA AGORA VAZIOS (SEM VALOR PADRÃO) -->
             <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
               E-mail
-              <input name="email" type="email" required value="prodrigosilvacel@gmail.com.br" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
+              <input name="email" type="email" required placeholder="seu@email.com" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
             </label>
             <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
               Senha
-              <input name="senha" type="password" required value="w18187" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
+              <input name="senha" type="password" required placeholder="Sua senha" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
             </label>
+
             <button class="button button-primary button-wide" type="submit" style="background: #a855f7; color: white; border: none; padding: 11px; font-weight: bold; border-radius: 8px; cursor: pointer;">Entrar</button>
             <p class="form-message" id="auth-message" role="status" style="color: #dc3545; font-size: 12px;"></p>
           </form>
+
           <div class="auth-switch" style="margin-top: 1.2rem; display: flex; gap: 1rem; justify-content: center;">
             <button type="button" data-auth-mode="login" class="is-active" style="background:none; border:none; cursor:pointer; font-weight:600; color: #a855f7;">Já tenho conta</button>
             <button type="button" data-auth-mode="register" style="background:none; border:none; cursor:pointer; font-weight:600; color: #64748b;">Criar conta</button>
@@ -89,7 +94,6 @@
           </div>
         </section>
 
-        <!-- CAIXAS DE ESTATÍSTICAS / CONTADORES RESTAURADAS -->
         <section class="stats-row" aria-label="Resumo da agenda">
           <article class="stat-block">
             <span class="stat-label">SERVIÇOS DISPONÍVEIS</span>
