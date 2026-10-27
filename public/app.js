@@ -116,6 +116,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  // Função para buscar e renderizar as métricas financeiras (Master)
+  const renderMasterMetrics = async () => {
+    const totalEl = document.getElementById('metric-total-atendimentos');
+    const faturamentoEl = document.getElementById('metric-faturamento');
+    const mediaEl = document.getElementById('metric-media');
+
+    try {
+      const metrics = await apiFetch('/master/metricas');
+      if (totalEl) totalEl.textContent = metrics.totalAtendimentos || 0;
+      if (faturamentoEl) faturamentoEl.textContent = formatCurrency(metrics.faturamentoTotal);
+      if (mediaEl) mediaEl.textContent = formatCurrency(metrics.mediaFaturamentoPorAtendimento);
+    } catch (error) {
+      console.error('Erro ao carregar métricas:', error);
+      showToast('Erro ao carregar relatório financeiro', true);
+    }
+  };
+
   const setActiveView = (viewName) => {
     const targetView = String(viewName || 'agenda');
 
@@ -136,6 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const canAccessAdmin = !!currentUser && String(currentUser.tipo || '').toLowerCase() === 'master';
       adminPanel.hidden = !canAccessAdmin || targetView !== 'cadastros';
     }
+
+    // Se abrir a aba de métricas, carrega os dados financeiros automaticamente
+    if (targetView === 'metricas') {
+      renderMasterMetrics();
+    }
   };
 
   const updateAdminVisibility = () => {
@@ -146,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const activeView = document.querySelector('.nav-link.is-active')?.dataset.view || 'agenda';
-    if (activeView === 'cadastros' && !canAccessAdmin) {
+    if ((activeView === 'cadastros' || activeView === 'metricas') && !canAccessAdmin) {
       setActiveView('agenda');
     }
   };
@@ -328,7 +350,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const appointments = await apiFetch('/agendamentos');
 
-      // Ordenar os agendamentos em ordem alfabética pelo nome do cliente
       appointments.sort((a, b) => {
         const nomeA = String(a.usuario_nome || '').toLowerCase();
         const nomeB = String(b.usuario_nome || '').toLowerCase();
@@ -404,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const viewName = button.dataset.view;
       const canAccessAdmin = !!currentUser && String(currentUser.tipo || '').toLowerCase() === 'master';
 
-      if (viewName === 'cadastros' && !canAccessAdmin) {
+      if ((viewName === 'cadastros' || viewName === 'metricas') && !canAccessAdmin) {
         showToast('Acesso restrito ao usuário master.', true);
         return;
       }
@@ -432,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ nome, email, senha }),
           });
 
-          setMessage(authMessage, 'Cadastro realizado com sucesso! Agora faça login.', false);
+          setMessage(authMessage, 'Cadastro realizado com sucesso! Faça login.', false);
           setAuthMode('login');
           authForm.reset();
 
