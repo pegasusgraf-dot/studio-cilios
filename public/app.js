@@ -558,13 +558,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   <button class="button" data-action="concluir" data-id="${apt.id}" style="background:#16a34a; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Concluir</button>
                   <button class="button" data-action="cancelar" data-id="${apt.id}" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Não veio</button>
                 ` : ''}
-                <button class="button button-danger" data-action="excluir" data-id="${apt.id}" style="background:#64748b; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Excluir</button>
+                ${isMaster ? `<button class="button button-danger" data-action="excluir" data-id="${apt.id}" style="background:#64748b; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Excluir</button>` : ''}
               </div>
             `;
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'concluir'));
             row.querySelector('[data-action="cancelar"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'cancelar'));
-            row.querySelector('[data-action="excluir"]').addEventListener('click', () => excluirAgendamento(apt.id));
+            row.querySelector('[data-action="excluir"]')?.addEventListener('click', () => excluirAgendamento(apt.id));
 
             listEl.appendChild(row);
           });
