@@ -69,7 +69,7 @@
         </a>
         <nav class="main-nav">
           <button class="nav-link is-active" type="button" data-view="agenda">Agenda de Horários</button>
-          <button class="nav-link admin-only" type="button" data-view="cadastros" hidden>Painel Master (Serviços)</button>
+          <button class="nav-link admin-only" type="button" data-view="cadastros" hidden>Painel Master (Serviços) <span class="nav-count" id="admin-count">0</span></button>
           <button class="nav-link admin-only" type="button" data-view="metricas" hidden>Relatório Financeiro</button>
           <button class="nav-link" type="button" data-view="cracha">Meu Crachá</button>
         </nav>
@@ -89,6 +89,25 @@
           </div>
         </section>
 
+        <!-- CAIXAS DE ESTATÍSTICAS / CONTADORES RESTAURADAS -->
+        <section class="stats-row" aria-label="Resumo da agenda">
+          <article class="stat-block">
+            <span class="stat-label">SERVIÇOS DISPONÍVEIS</span>
+            <strong id="stat-services">0</strong>
+            <span class="stat-foot">procedimentos cadastrados</span>
+          </article>
+          <article class="stat-block">
+            <span class="stat-label">AGENDAMENTOS</span>
+            <strong id="stat-mine">0</strong>
+            <span class="stat-foot">na agenda</span>
+          </article>
+          <article class="stat-block stat-accent">
+            <span class="stat-label">PRÓXIMO HORÁRIO</span>
+            <strong id="stat-next">—</strong>
+            <span class="stat-foot" id="stat-next-detail">Nenhum agendamento futuro</span>
+          </article>
+        </section>
+
         <section class="view-panel is-visible" id="agenda-view">
           <div class="agenda-layout">
             <section class="booking-panel card">
@@ -101,7 +120,6 @@
               </div>
 
               <form id="appointment-form" class="form-stack">
-                <!-- CAMPO NOME DA CLIENTE ADICIONADO AQUI -->
                 <label class="field">Nome da Cliente
                   <input type="text" name="usuario_nome" id="input-usuario-nome" placeholder="Digite o nome da cliente" required style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box;">
                 </label>
