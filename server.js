@@ -140,6 +140,64 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// ROTAS DE CLIENTES DETALHADOS (Apenas Master)
+app.get('/api/clientes', requireAuth, requireMaster, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, nome, email, data_nascimento, profissao, endereco, telefone, cpf FROM clients ORDER BY nome');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ mensagem: 'Erro ao buscar clientes.' });
+  }
+});
+
+app.post('/api/clientes', requireAuth, requireMaster, async (req, res) => {
+  const nome = String(req.body.nome || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const data_nascimento = String(req.body.data_nascimento || '').trim();
+  const profissao = String(req.body.profissao || '').trim();
+  const endereco = String(req.body.endereco || '').trim();
+  const telefone = String(req.body.telefone || '').trim();
+  const cpf = String(req.body.cpf || '').trim();
+
+  if (!nome) {
+    return res.status(400).json({ mensagem: 'O nome do cliente é obrigatório.' });
+  }
+
+  try {
+    const id = makeId('cli');
+    await pool.query(
+      'INSERT INTO clients (id, nome, email, data_nascimento, profissao, endereco, telefone, cpf) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [id, nome, email, data_nascimento, profissao, endereco, telefone, cpf]
+    );
+    res.status(201).json({ id, nome, email, data_nascimento, profissao, endereco, telefone, cpf });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ mensagem: 'Erro ao cadastrar cliente.' });
+  }
+});
+
+app.delete('/api/clientes/:id', requireAuth, requireMaster, async (req, res) => {
+  const id = String(req.params.id || '').trim();
+  try {
+    const result = await pool.query('DELETE FROM clients WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ mensagem: 'Cliente não encontrado.' });
+    res.json({ mensagem: 'Cliente removido com sucesso.' });
+  } catch (err) {
+    res.status(500).json({ mensagem: 'Erro ao remover cliente.' });
+  }
+});
+
+// Histórico de atendimentos do cliente
+app.get('/api/clientes/:nome/historico', requireAuth, requireMaster, async (req, res) => {
+  const nomeCliente = decodeURIComponent(req.params.nome || '').trim();
+  try {
+    const result = await pool.query('SELECT * FROM appointments WHERE LOWER(usuario_nome) = LOWER($1) ORDER BY data_hora DESC', [nomeCliente]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ mensagem: 'Erro ao buscar histórico do cliente.' });
+  }
+});
+
 app.get('/api/servicos', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, nome, valor, duracao_minutos FROM services ORDER BY nome');
@@ -276,7 +334,6 @@ app.post('/api/agendamentos', requireAuth, async (req, res) => {
   }
 });
 
-// Marcar como concluído
 app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
@@ -291,7 +348,6 @@ app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (r
   }
 });
 
-// Marcar como cancelado (cliente não veio)
 app.patch('/api/agendamentos/:id/cancelar', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
@@ -324,7 +380,6 @@ app.delete('/api/agendamentos/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Rota de Métricas (apenas concluídos entram no financeiro)
 app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => {
   const dataInicio = req.query.inicio;
   const dataFim = req.query.fim;
@@ -383,6 +438,17 @@ const initDb = async () => {
         usuario_nome VARCHAR(150),
         data_hora VARCHAR(50),
         status VARCHAR(20) DEFAULT 'pendente'
+      );
+
+      CREATE TABLE IF NOT EXISTS clients (
+        id VARCHAR(64) PRIMARY KEY,
+        nome VARCHAR(150) NOT NULL,
+        email VARCHAR(150),
+        data_nascimento VARCHAR(50),
+        profissao VARCHAR(100),
+        endereco TEXT,
+        telefone VARCHAR(50),
+        cpf VARCHAR(50)
       );
     `);
 
