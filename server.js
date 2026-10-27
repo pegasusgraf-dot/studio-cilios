@@ -280,7 +280,7 @@ app.post('/api/agendamentos', requireAuth, async (req, res) => {
   }
 });
 
-// Rota para concluir atendimento
+// Rota corrigida para concluir atendimento
 app.patch('/api/agendamentos/:id/concluir', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
@@ -323,7 +323,7 @@ app.delete('/api/agendamentos/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Rota de Métricas com filtro financeiro por data
+// Rota de Métricas corrigida para tratar datas de forma segura
 app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => {
   const dataInicio = req.query.inicio;
   const dataFim = req.query.fim;
@@ -333,7 +333,7 @@ app.get('/api/master/metricas', requireAuth, requireMaster, async (req, res) => 
     let params = [];
 
     if (dataInicio && dataFim) {
-      query += ' AND LEFT(data_hora, 10) >= $1 AND LEFT(data_hora, 10) <= $2';
+      query += ' AND SUBSTRING(data_hora, 1, 10) >= $1 AND SUBSTRING(data_hora, 1, 10) <= $2';
       params.push(dataInicio, dataFim);
     }
 
