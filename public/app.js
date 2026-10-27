@@ -188,7 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
     appScreen.hidden = true;
   };
 
-  // GERENCIAMENTO E EDIÇÃO DE SERVIÇOS/TRATAMENTOS
   const renderServices = async () => {
     const statServices = document.getElementById('stat-services');
     const adminCount = document.getElementById('admin-count');
