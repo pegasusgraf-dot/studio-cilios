@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fdf2f4">
-    <title>GH Lash Studio — Agendamentos</title>
-    <meta name="description" content="Sistema exclusivo para agendamento de procedimentos no GH Lash Studio.">
+    <title>Studio de Cílios — Agendamentos</title>
+    <meta name="description" content="Sistema exclusivo para agendamento de procedimentos no Studio de Cílios.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,8 +15,7 @@
     <style>
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
       .auth-layout { display: flex; width: 100vw; height: 100vh; background: #fff; }
-      .auth-intro { flex: 1; background: linear-gradient(135deg, #e879f9 0%, #a855f7 100%); color: #ffffff; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; text-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-      .auth-intro h1, .auth-intro p, .auth-intro span { color: #ffffff !important; }
+      .auth-intro { flex: 1; background: linear-gradient(135deg, #e879f9 0%, #a855f7 100%); color: white; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
       .auth-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; background: #ffffff; }
       .cracha-card { width: 320px; height: 200px; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin: 20px auto; text-align: center; }
       .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
@@ -28,20 +27,19 @@
   <body>
     <main id="auth-screen" class="auth-layout">
       <section class="auth-intro">
-        <div class="brand brand-light" style="font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px;">
-          <!-- Quadrado com fundo escuro e elegante para destacar bem as letras GH -->
-          <span class="brand-mark" style="background: #3b0764; color: #ffffff; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2);">GH</span>
-          <span style="color: #ffffff; letter-spacing: 0.5px;">GH Lash Studio<span class="brand-period" style="color: #fef08a;">.</span></span>
+        <div class="brand brand-light" style="font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+          <span class="brand-mark" style="background: white; color: #a855f7; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">S</span>
+          <span>Studio<span class="brand-period" style="color: #fef08a;">.</span></span>
         </div>
         <div class="intro-copy">
-          <p class="eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #fef08a; font-weight: 800;">REFERÊNCIA EM EXTENSÃO DE CÍLIOS</p>
-          <h1 style="font-size: 38px; line-height: 1.25; margin: 20px 0; color: #ffffff; font-weight: 800;">Realce sua beleza natural,<br><span style="color: #fef08a;">um olhar marcante de cada vez.</span></h1>
+          <p class="eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: bold;">BEM-VINDA AO STUDIO</p>
+          <h1 style="font-size: 38px; line-height: 1.2; margin: 20px 0;">O olhar perfeito,<br><span style="color: #fef08a;">na hora certa.</span></h1>
         </div>
       </section>
 
       <section class="auth-panel">
         <div class="auth-box" style="width: 100%; max-width: 380px;">
-          <p class="eyebrow" id="auth-eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #444; font-weight: bold;">BEM-VINDA DE VOLTA</p>
+          <p class="eyebrow" id="auth-eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #666; font-weight: bold;">BEM-VINDA DE VOLTA</p>
           <h2 id="auth-title" style="font-size: 24px; margin: 5px 0 8px 0; color: #111;">Acesse sua conta</h2>
           
           <form id="auth-form" class="form-stack" style="display: flex; flex-direction: column; gap: 15px;">
@@ -74,8 +72,8 @@
     <div id="app-screen" class="app-shell" hidden>
       <header class="topbar">
         <a class="brand brand-dark" href="#agenda">
-          <span class="brand-mark" style="background: #a855f7; color: white;">GH</span>
-          <span>GH Lash Studio</span>
+          <span class="brand-mark" style="background: #a855f7; color: white;">S</span>
+          <span>Studio de Cílios</span>
         </a>
         <nav class="main-nav">
           <button class="nav-link is-active" type="button" data-view="agenda">Agenda de Horários</button>
@@ -218,4 +216,171 @@
                 <label class="field">Telefone
                   <input type="text" name="telefone" placeholder="(00) 00000-0000" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
                 </label>
-                <label class="
+                <label class="field">E-mail
+                  <input type="email" name="email" placeholder="email@exemplo.com" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <label class="field">CPF
+                  <input type="text" name="cpf" placeholder="000.000.000-00" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                </label>
+                <button type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-top: 5px;">Cadastrar Cliente</button>
+              </form>
+            </section>
+            <section class="management-panel card">
+              <h3>Clientes Cadastradas</h3>
+              <div class="management-list items-list" id="client-list" style="margin-top: 10px;"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- MODAL DA FICHA E HISTÓRICO DO CLIENTE -->
+        <div id="ficha-modal" class="modal-overlay">
+          <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+              <h3 style="margin: 0;">Ficha de Procedimento: <span id="ficha-cliente-nome" style="color: #a855f7;"></span></h3>
+              <button type="button" id="close-ficha-modal" style="background: none; border: none; font-size: 18px; cursor: pointer; font-weight: bold;">✕</button>
+            </div>
+
+            <div style="margin-bottom: 20px; background: #f8fafc; padding: 12px; border-radius: 6px;">
+              <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #333;">Histórico de Atendimentos Realizados</h4>
+              <div id="ficha-historico-lista">Carregando histórico...</div>
+            </div>
+
+            <form id="ficha-form" style="display: flex; flex-direction: column; gap: 12px;">
+              <input type="hidden" id="ficha-cliente-id" name="cliente_id">
+
+              <!-- PERGUNTAS COM SIM / NÃO -->
+              <div class="question-row">
+                <span>Usa rímel?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="usa_rimel" value="sim"> Sim</label>
+                  <label><input type="radio" name="usa_rimel" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Possui problemas de tireoide?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="problemas_tireoide" value="sim"> Sim</label>
+                  <label><input type="radio" name="problemas_tireoide" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Possui Diabetes?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="possui_diabetes" value="sim"> Sim</label>
+                  <label><input type="radio" name="possui_diabetes" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>É gestante?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="gestante" value="sim"> Sim</label>
+                  <label><input type="radio" name="gestante" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Procedimento recente nos olhos?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="procedimento_recente_olhos" value="sim"> Sim</label>
+                  <label><input type="radio" name="procedimento_recente_olhos" value="nao"> Não</label>
+                </div>
+              </div>
+              <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, qual procedimento recente nos olhos?
+                <input type="text" name="procedimento_recente_olhos_qual" placeholder="Especifique o procedimento" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+              </label>
+
+              <div class="question-row">
+                <span>Possui alergia?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="possui_alergia" value="sim"> Sim</label>
+                  <label><input type="radio" name="possui_alergia" value="nao"> Não</label>
+                </div>
+              </div>
+              <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, qual alergia?
+                <input type="text" name="alergia_qual" placeholder="Especifique a alergia" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+              </label>
+
+              <div class="question-row">
+                <span>Possui glaucoma ou algum problema ocular?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="possui_glaucoma_ou_ocular" value="sim"> Sim</label>
+                  <label><input type="radio" name="possui_glaucoma_ou_ocular" value="nao"> Não</label>
+                </div>
+              </div>
+              <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, explique:
+                <input type="text" name="glaucoma_ocular_qual" placeholder="Explique o problema ocular" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+              </label>
+
+              <div class="question-row">
+                <span>Está em tratamento médico atualmente?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="esta_em_tratamento" value="sim"> Sim</label>
+                  <label><input type="radio" name="esta_em_tratamento" value="nao"> Não</label>
+                </div>
+              </div>
+
+              <label class="field" style="font-size: 12px; font-weight: bold;">Existe algum procedimento que julgue ser necessário informar ao profissional antes do procedimento?
+                <textarea name="informacoes_adicionais" rows="2" placeholder="Observações importantes" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;"></textarea>
+              </label>
+
+              <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
+              <h4 style="margin: 0; font-size: 14px; color: #a855f7;">Detalhes dos Procedimentos de Cílios</h4>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <label class="field" style="font-size: 12px; font-weight: bold;">Mapping:
+                  <input type="text" name="mapping" placeholder="Ex: Cat Eye, Doll..." style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+                </label>
+                <label class="field" style="font-size: 12px; font-weight: bold;">Estilo:
+                  <input type="text" name="estilo" placeholder="Ex: Volume Russo" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+                </label>
+                <label class="field" style="font-size: 12px; font-weight: bold;">Modelos dos fios:
+                  <input type="text" name="modelo_fios" placeholder="Ex: Y, W, Ellipse" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+                </label>
+                <label class="field" style="font-size: 12px; font-weight: bold;">Espessura:
+                  <input type="text" name="espessura" placeholder="Ex: 0.07" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+                </label>
+                <label class="field" style="font-size: 12px; font-weight: bold;">Curvatura:
+                  <input type="text" name="curvatura" placeholder="Ex: C, CC, D" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+                </label>
+                <label class="field" style="font-size: 12px; font-weight: bold;">Adesivo ou Cola:
+                  <input type="text" name="adesivo_cola" placeholder="Ex: Master Exotik" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+                </label>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                <button type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight: bold;">Salvar Ficha</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <section class="view-panel admin-only" id="metricas-view" hidden>
+          <div class="section-heading">
+            <h2>Relatório Financeiro & Métricas</h2>
+          </div>
+          <div class="card" style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <label style="font-size: 12px; font-weight: bold;">Data Início: <input type="date" id="filtro-inicio" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da;"></label>
+            <label style="font-size: 12px; font-weight: bold;">Data Fim: <input type="date" id="filtro-fim" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da;"></label>
+            <button type="button" id="filtrar-metricas" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer;">Filtrar Período</button>
+          </div>
+          <div class="stats-row">
+            <article class="stat-block"><span class="stat-label">ATENDIMENTOS CONCLUÍDOS</span><strong id="metric-total-atendimentos">0</strong></article>
+            <article class="stat-block"><span class="stat-label">FATURAMENTO TOTAL</span><strong id="metric-faturamento">R$ 0,00</strong></article>
+            <article class="stat-block"><span class="stat-label">MÉDIA POR ATENDIMENTO</span><strong id="metric-media">R$ 0,00</strong></article>
+          </div>
+        </section>
+
+        <section class="view-panel" id="cracha-view" hidden>
+          <div class="cracha-card"><div id="qrcode"></div><p style="font-size: 11px; margin-top: 8px;">Crachá Digital</p></div>
+        </section>
+        <div class="toast" id="toast" role="status"></div>
+      </main>
+    </div>
+    <script>
+      new QRCode(document.getElementById("qrcode"), { text: window.location.origin + "/perfil.html?id=studio-cliente", width: 96, height: 96 });
+    </script>
+  </body>
+</html>
