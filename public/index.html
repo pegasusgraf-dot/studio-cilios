@@ -1,31 +1,186 @@
-<section class="view-panel admin-only" id="cadastros-view" hidden>
-  <div class="section-heading">
-    <h2>Gerenciar Catálogo de Tratamentos</h2>
-  </div>
-  <div class="management-grid">
-    <section class="management-panel card">
-      <h3>Cadastrar ou Editar Procedimento</h3>
-      <form id="service-form" class="form-stack compact-form" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
-        <input type="hidden" name="id" id="service-id" value="">
-        <label class="field">Nome do Procedimento
-          <input type="text" name="nome" required placeholder="Ex: Extensão Volume Russo" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
-        </label>
-        <label class="field">Valor (R$)
-          <input type="number" step="0.01" name="valor" required placeholder="120.00" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
-        </label>
-        <label class="field">Duração (minutos)
-          <input type="number" name="duracao_minutos" required placeholder="90" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
-        </label>
-        <div style="display: flex; gap: 8px; margin-top: 5px;">
-          <button id="service-submit" type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; flex: 1;">Adicionar serviço</button>
-          <button id="service-cancel" type="button" class="button button-secondary" hidden style="background: #64748b; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">Cancelar</button>
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fdf2f4">
+    <title>Studio de Cílios — Agendamentos</title>
+    <meta name="description" content="Sistema exclusivo para agendamento de procedimentos no Studio de Cílios.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="app.js" defer></script>
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
+      .auth-layout { display: flex; width: 100vw; height: 100vh; background: #fff; }
+      .auth-intro { flex: 1; background: linear-gradient(135deg, #e879f9 0%, #a855f7 100%); color: white; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+      .auth-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; background: #ffffff; }
+      .cracha-card { width: 320px; height: 200px; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin: 20px auto; text-align: center; }
+      .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+      .modal-card { background: white; width: 100%; max-width: 600px; border-radius: 8px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+    </style>
+  </head>
+  <body>
+    <main id="auth-screen" class="auth-layout">
+      <section class="auth-intro">
+        <div class="brand brand-light" style="font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+          <span class="brand-mark" style="background: white; color: #a855f7; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">S</span>
+          <span>Studio<span class="brand-period" style="color: #fef08a;">.</span></span>
         </div>
-        <p class="form-message" id="service-message" role="status"></p>
-      </form>
-    </section>
-    <section class="management-panel card">
-      <h3>Procedimentos Cadastrados</h3>
-      <div class="management-list items-list" id="service-list" style="margin-top: 10px;"></div>
-    </section>
-  </div>
-</section>
+        <div class="intro-copy">
+          <p class="eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: bold;">BEM-VINDA AO STUDIO</p>
+          <h1 style="font-size: 38px; line-height: 1.2; margin: 20px 0;">O olhar perfeito,<br><span style="color: #fef08a;">na hora certa.</span></h1>
+        </div>
+      </section>
+
+      <section class="auth-panel">
+        <div class="auth-box" style="width: 100%; max-width: 380px;">
+          <p class="eyebrow" id="auth-eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #666; font-weight: bold;">BEM-VINDA DE VOLTA</p>
+          <h2 id="auth-title" style="font-size: 24px; margin: 5px 0 8px 0; color: #111;">Acesse sua conta</h2>
+          
+          <form id="auth-form" class="form-stack" style="display: flex; flex-direction: column; gap: 15px;">
+            <label class="field" id="name-field" hidden style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
+              Nome completo
+              <input name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
+            </label>
+
+            <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
+              E-mail
+              <input name="email" type="email" required placeholder="seu@email.com" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
+            </label>
+            <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
+              Senha
+              <input name="senha" type="password" required placeholder="Sua senha" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
+            </label>
+
+            <button class="button button-primary button-wide" type="submit" style="background: #a855f7; color: white; border: none; padding: 11px; font-weight: bold; border-radius: 8px; cursor: pointer;">Entrar</button>
+            <p class="form-message" id="auth-message" role="status" style="color: #dc3545; font-size: 12px;"></p>
+          </form>
+
+          <div class="auth-switch" style="margin-top: 1.2rem; display: flex; gap: 1rem; justify-content: center;">
+            <button type="button" data-auth-mode="login" class="is-active" style="background:none; border:none; cursor:pointer; font-weight:600; color: #a855f7;">Já tenho conta</button>
+            <button type="button" data-auth-mode="register" style="background:none; border:none; cursor:pointer; font-weight:600; color: #64748b;">Criar conta</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="app-screen" class="app-shell" hidden>
+      <header class="topbar">
+        <a class="brand brand-dark" href="#agenda">
+          <span class="brand-mark" style="background: #a855f7; color: white;">S</span>
+          <span>Studio de Cílios</span>
+        </a>
+        <nav class="main-nav">
+          <button class="nav-link is-active" type="button" data-view="agenda">Agenda de Horários</button>
+          <button class="nav-link admin-only" type="button" data-view="cadastros" hidden>Painel Master (Serviços) <span class="nav-count" id="admin-count">0</span></button>
+          <button class="nav-link admin-only" type="button" data-view="clientes" hidden>Cadastro de Clientes</button>
+          <button class="nav-link admin-only" type="button" data-view="metricas" hidden>Relatório Financeiro</button>
+          <button class="nav-link" type="button" data-view="cracha">Meu Crachá</button>
+        </nav>
+        <div class="account-area">
+          <span class="account-avatar" id="account-avatar">A</span>
+          <span class="account-name" id="account-name">Nome</span>
+          <span class="account-role role-tag" id="account-role">Cliente</span>
+          <button id="logout-button" class="icon-button" type="button">↗</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="page-heading">
+          <div>
+            <p class="eyebrow">CENTRAL DE AGENDAMENTOS</p>
+            <h1>Sua agenda, em ordem.</h1>
+          </div>
+        </section>
+
+        <section class="stats-row" aria-label="Resumo da agenda">
+          <article class="stat-block">
+            <span class="stat-label">SERVIÇOS DISPONÍVEIS</span>
+            <strong id="stat-services">0</strong>
+            <span class="stat-foot">procedimentos cadastrados</span>
+          </article>
+          <article class="stat-block">
+            <span class="stat-label">AGENDAMENTOS</span>
+            <strong id="stat-mine">0</strong>
+            <span class="stat-foot">na agenda</span>
+          </article>
+          <article class="stat-block stat-accent">
+            <span class="stat-label">PRÓXIMO HORÁRIO</span>
+            <strong id="stat-next">—</strong>
+            <span class="stat-foot" id="stat-next-detail">Nenhum agendamento futuro</span>
+          </article>
+        </section>
+
+        <section class="view-panel is-visible" id="agenda-view">
+          <div class="agenda-layout">
+            <section class="booking-panel card">
+              <div class="panel-heading">
+                <span class="panel-icon">＋</span>
+                <div>
+                  <h3>Novo Agendamento</h3>
+                  <p>Escolha o procedimento e o horário desejado.</p>
+                </div>
+              </div>
+
+              <form id="appointment-form" class="form-stack">
+                <label class="field">Nome da Cliente
+                  <input type="text" name="usuario_nome" id="input-usuario-nome" placeholder="Digite o nome da cliente" required style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box;">
+                </label>
+                <label class="field">Procedimento
+                  <select id="service-select" name="servico_id" required>
+                    <option value="">Carregando serviços...</option>
+                  </select>
+                </label>
+                <label class="field">Data e Hora
+                  <input type="datetime-local" name="data_hora" required>
+                </label>
+                <div class="form-actions">
+                  <button type="submit" class="button button-primary button-wide" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Confirmar agendamento</button>
+                </div>
+                <p class="form-message" id="appointment-message" role="status"></p>
+              </form>
+            </section>
+
+            <section class="reservations-panel card">
+              <div class="filter-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Horários Marcados</h3>
+                <label class="filter-label">
+                  <select id="appointment-filter">
+                    <option value="todos">Todos os serviços</option>
+                  </select>
+                </label>
+              </div>
+              <div id="appointment-list" class="reservation-list items-list"></div>
+              <div id="empty-state" class="empty-state" hidden><h3>Nenhum agendamento encontrado.</h3></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view-panel admin-only" id="cadastros-view" hidden>
+          <div class="section-heading">
+            <h2>Gerenciar Catálogo de Tratamentos</h2>
+          </div>
+          <div class="management-grid">
+            <section class="management-panel card">
+              <form id="service-form" class="form-stack compact-form">
+                <input type="hidden" name="id" id="service-id" value="">
+                <label class="field">Nome do Procedimento
+                  <input type="text" name="nome" required placeholder="Ex: Extensão Volume Russo">
+                </label>
+                <label class="field">Valor (R$)
+                  <input type="number" step="0.01" name="valor" required placeholder="120.00">
+                </label>
+                <label class="field">Duração (minutos)
+                  <input type="number" name="duracao_minutos" required placeholder="90">
+                </label>
+                <button id="service-submit" type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Adicionar serviço</button>
+                <button id="service-cancel" type="button" class="button button-secondary" hidden>Cancelar</button>
+                <p class="form-message" id="service-message" role="status"></p>
+              </form>
+            </section>
+            <section class="management-panel card">
+              <div class="management-list items-list" id="service-list"></div>
+            </section
