@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputUsuarioNome = document.getElementById('input-usuario-nome');
   
   const clientForm = document.getElementById('client-form');
+  const fichaModal = document.getElementById('ficha-modal');
+  const fichaForm = document.getElementById('ficha-form');
+  const fichaClienteNome = document.getElementById('ficha-cliente-nome');
+  const fichaClienteId = document.getElementById('ficha-cliente-id');
+  const closeFichaModal = document.getElementById('close-ficha-modal');
 
   let currentUser = null;
   let authMode = 'login';
@@ -194,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { console.error(e); }
   };
 
-  // GERENCIAMENTO DE CLIENTES E HISTÓRICO
+  // CLIENTES E FICHA
   const renderClients = async () => {
     const listEl = document.getElementById('client-list');
     if (!listEl) return;
@@ -211,8 +216,8 @@ document.addEventListener('DOMContentLoaded', () => {
         card.innerHTML = `
           <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
             <strong>${c.nome}</strong>
-            <div style="display: flex; gap: 6px;">
-              <button class="button" data-action="historico" style="background: #3b82f6; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Histórico</button>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button class="button" data-action="ficha" style="background: #a855f7; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Ficha / Histórico</button>
               <button class="button button-danger" data-action="excluir" style="background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Excluir</button>
             </div>
           </div>
@@ -224,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="grid-column: span 2;"><strong>Endereço:</strong> ${c.endereco || '—'}</span>
             <span style="grid-column: span 2;"><strong>E-mail:</strong> ${c.email || '—'}</span>
           </div>
-          <div class="client-history-box" data-history-container="${c.nome}" style="width: 100%; margin-top: 8px; background: #f8fafc; padding: 8px; border-radius: 6px; display: none;"></div>
         `;
 
         card.querySelector('[data-action="excluir"]').addEventListener('click', async () => {
@@ -239,35 +243,101 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
 
-        card.querySelector('[data-action="historico"]').addEventListener('click', async () => {
-          const box = card.querySelector(`[data-history-container="${c.nome}"]`);
-          if (box.style.display === 'block') {
-            box.style.display = 'none';
-            return;
-          }
-          box.style.display = 'block';
-          box.innerHTML = '<span class="muted">Carregando histórico...</span>';
-          try {
-            const hist = await apiFetch(`/clientes/${encodeURIComponent(c.nome)}/historico`);
-            if (!hist.length) {
-              box.innerHTML = '<span class="muted" style="font-size:11px;">Nenhum atendimento registrado para esta cliente.</span>';
-              return;
-            }
-            let html = '<strong style="font-size: 11px; display:block; margin-bottom: 4px;">Histórico de Atendimentos:</strong><ul style="margin:0; padding-left:15px; font-size:11px;">';
-            hist.forEach(h => {
-              html += `<li>${formatDateTime(h.data_hora)} — <strong>${h.servico_nome}</strong> (${formatCurrency(h.valor)}) [Status: ${h.status}]</li>`;
-            });
-            html += '</ul>';
-            box.innerHTML = html;
-          } catch (e) {
-            box.innerHTML = '<span style="color:red; font-size:11px;">Erro ao carregar histórico.</span>';
-          }
+        card.querySelector('[data-action="ficha"]').addEventListener('click', () => {
+          abrirFichaModal(c);
         });
 
         listEl.appendChild(card);
       });
     } catch (e) { console.error(e); }
   };
+
+  const abrirFichaModal = async (cliente) => {
+    if (!fichaModal) return;
+    fichaClienteNome.textContent = cliente.nome;
+    fichaClienteId.value = cliente.id;
+    fichaForm.reset();
+
+    // Buscar histórico de agendamentos e preencher
+    const historicoBox = document.getElementById('ficha-historico-lista');
+    historicoBox.innerHTML = 'Carregando histórico...';
+
+    try {
+      const hist = await apiFetch(`/clientes/${encodeURIComponent(cliente.nome)}/historico`);
+      if (!hist.length) {
+        historicoBox.innerHTML = '<p class="muted">Nenhum atendimento realizado ainda.</p>';
+      } else {
+        let html = '<ul style="margin:0; padding-left:15px; font-size:12px;">';
+        hist.forEach(h => {
+          html += `<li>${formatDateTime(h.data_hora)} — <strong>${h.servico_nome}</strong> (${formatCurrency(h.valor)}) [Status: ${h.status}]</li>`;
+        });
+        html += '</ul>';
+        historicoBox.innerHTML = html;
+      }
+    } catch (err) {
+      historicoBox.innerHTML = '<span style="color:red; font-size:12px;">Erro ao carregar histórico.</span>';
+    }
+
+    // Buscar ficha salva anteriormente se houver
+    try {
+      const ficha = await apiFetch(`/clientes/${cliente.id}/ficha`);
+      if (ficha) {
+        fichaForm.usa_rimel.checked = ficha.usa_rimel;
+        fichaForm.procedimento_recente_olhos.value = ficha.procedimento_recente_olhos || '';
+        fichaForm.possui_alergia.checked = ficha.possui_alergia;
+        fichaForm.alergia_qual.value = ficha.alergia_qual || '';
+        fichaForm.possui_glaucoma_ou_ocular.checked = ficha.possui_glaucoma_ou_ocular;
+        fichaForm.glaucoma_ocular_qual.value = ficha.glaucoma_ocular_qual || '';
+        fichaForm.esta_em_tratamento.checked = ficha.esta_em_tratamento;
+        fichaForm.informacoes_adicionais.value = ficha.informacoes_adicionais || '';
+        fichaForm.mapping.value = ficha.mapping || '';
+        fichaForm.estilo.value = ficha.estilo || '';
+        fichaForm.modelo_fios.value = ficha.modelo_fios || '';
+        fichaForm.espessura.value = ficha.espessura || '';
+        fichaForm.curvatura.value = ficha.curvatura || '';
+        fichaForm.adesivo_cola.value = ficha.adesivo_cola || '';
+      }
+    } catch (e) {}
+
+    fichaModal.style.display = 'flex';
+  };
+
+  closeFichaModal?.addEventListener('click', () => {
+    fichaModal.style.display = 'none';
+  });
+
+  fichaForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const clienteId = fichaClienteId.value;
+    const formData = new FormData(fichaForm);
+    const data = {
+      usa_rimel: formData.get('usa_rimel') === 'on',
+      procedimento_recente_olhos: formData.get('procedimento_recente_olhos'),
+      possui_alergia: formData.get('possui_alergia') === 'on',
+      alergia_qual: formData.get('alergia_qual'),
+      possui_glaucoma_ou_ocular: formData.get('possui_glaucoma_ou_ocular') === 'on',
+      glaucoma_ocular_qual: formData.get('glaucoma_ocular_qual'),
+      esta_em_tratamento: formData.get('esta_em_tratamento') === 'on',
+      informacoes_adicionais: formData.get('informacoes_adicionais'),
+      mapping: formData.get('mapping'),
+      estilo: formData.get('estilo'),
+      modelo_fios: formData.get('modelo_fios'),
+      espessura: formData.get('espessura'),
+      curvatura: formData.get('curvatura'),
+      adesivo_cola: formData.get('adesivo_cola')
+    };
+
+    try {
+      await apiFetch(`/clientes/${clienteId}/ficha`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      showToast('Ficha de atendimento salva com sucesso!');
+      fichaModal.style.display = 'none';
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
 
   clientForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
