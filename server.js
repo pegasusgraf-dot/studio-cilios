@@ -201,7 +201,11 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
   const clienteId = String(req.params.id || '').trim();
   const {
     usa_rimel,
+    problemas_tireoide,
+    possui_diabetes,
+    gestante,
     procedimento_recente_olhos,
+    procedimento_recente_olhos_qual,
     possui_alergia,
     alergia_qual,
     possui_glaucoma_ou_ocular,
@@ -221,14 +225,17 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
     if (existe.rows.length > 0) {
       await pool.query(
         `UPDATE client_fichas SET 
-         usa_rimel = $1, procedimento_recente_olhos = $2, possui_alergia = $3, alergia_qual = $4, 
-         possui_glaucoma_ou_ocular = $5, glaucoma_ocular_qual = $6, esta_em_tratamento = $7, 
-         informacoes_adicionais = $8, mapping = $9, estilo = $10, modelo_fios = $11, 
-         espessura = $12, curvatura = $13, adesivo_cola = $14, atualizado_em = NOW() 
-         WHERE cliente_id = $15`,
+         usa_rimel = $1, problemas_tireoide = $2, possui_diabetes = $3, gestante = $4,
+         procedimento_recente_olhos = $5, procedimento_recente_olhos_qual = $6, 
+         possui_alergia = $7, alergia_qual = $8, possui_glaucoma_ou_ocular = $9, 
+         glaucoma_ocular_qual = $10, esta_em_tratamento = $11, informacoes_adicionais = $12, 
+         mapping = $13, estilo = $14, modelo_fios = $15, espessura = $16, curvatura = $17, 
+         adesivo_cola = $18, atualizado_em = NOW() WHERE cliente_id = $19`,
         [
-          Boolean(usa_rimel), String(procedimento_recente_olhos || ''), Boolean(possui_alergia), String(alergia_qual || ''),
-          Boolean(possui_glaucoma_ou_ocular), String(glaucoma_ocular_qual || ''), Boolean(esta_em_tratamento), String(informacoes_adicionais || ''),
+          String(usa_rimel || ''), String(problemas_tireoide || ''), String(possui_diabetes || ''), String(gestante || ''),
+          String(procedimento_recente_olhos || ''), String(procedimento_recente_olhos_qual || ''),
+          String(possui_alergia || ''), String(alergia_qual || ''), String(possui_glaucoma_ou_ocular || ''),
+          String(glaucoma_ocular_qual || ''), String(esta_em_tratamento || ''), String(informacoes_adicionais || ''),
           String(mapping || ''), String(estilo || ''), String(modelo_fios || ''), String(espessura || ''),
           String(curvatura || ''), String(adesivo_cola || ''), clienteId
         ]
@@ -236,11 +243,13 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
     } else {
       const id = makeId('fich');
       await pool.query(
-        `INSERT INTO client_fichas (id, cliente_id, usa_rimel, procedimento_recente_olhos, possui_alergia, alergia_qual, possui_glaucoma_ou_ocular, glaucoma_ocular_qual, esta_em_tratamento, informacoes_adicionais, mapping, estilo, modelo_fios, espessura, curvatura, adesivo_cola) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+        `INSERT INTO client_fichas (id, cliente_id, usa_rimel, problemas_tireoide, possui_diabetes, gestante, procedimento_recente_olhos, procedimento_recente_olhos_qual, possui_alergia, alergia_qual, possui_glaucoma_ou_ocular, glaucoma_ocular_qual, esta_em_tratamento, informacoes_adicionais, mapping, estilo, modelo_fios, espessura, curvatura, adesivo_cola) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
         [
-          id, clienteId, Boolean(usa_rimel), String(procedimento_recente_olhos || ''), Boolean(possui_alergia), String(alergia_qual || ''),
-          Boolean(possui_glaucoma_ou_ocular), String(glaucoma_ocular_qual || ''), Boolean(esta_em_tratamento), String(informacoes_adicionais || ''),
+          id, clienteId, String(usa_rimel || ''), String(problemas_tireoide || ''), String(possui_diabetes || ''), String(gestante || ''),
+          String(procedimento_recente_olhos || ''), String(procedimento_recente_olhos_qual || ''),
+          String(possui_alergia || ''), String(alergia_qual || ''), String(possui_glaucoma_ou_ocular || ''),
+          String(glaucoma_ocular_qual || ''), String(esta_em_tratamento || ''), String(informacoes_adicionais || ''),
           String(mapping || ''), String(estilo || ''), String(modelo_fios || ''), String(espessura || ''),
           String(curvatura || ''), String(adesivo_cola || '')
         ]
@@ -290,6 +299,32 @@ app.post('/api/servicos', requireAuth, requireMaster, async (req, res) => {
     res.status(201).json({ id, nome, valor, duracao_minutos });
   } catch (err) {
     res.status(500).json({ mensagem: 'Erro ao cadastrar serviço.' });
+  }
+});
+
+app.put('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => {
+  const id = String(req.params.id || '').trim();
+  const nome = String(req.body.nome || '').trim();
+  const valor = Number(req.body.valor || 0);
+  const duracao_minutos = Number(req.body.duracao_minutos || 0);
+
+  if (!nome || !Number.isFinite(valor) || valor <= 0 || !Number.isFinite(duracao_minutos) || duracao_minutos <= 0) {
+    return res.status(400).json({ mensagem: 'Preencha nome, valor e duração válidos.' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE services SET nome = $1, valor = $2, duracao_minutos = $3 WHERE id = $4 RETURNING *',
+      [nome, valor, duracao_minutos, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ mensagem: 'Serviço não encontrado.' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ mensagem: 'Erro ao atualizar serviço.' });
   }
 });
 
@@ -460,20 +495,24 @@ const initDb = async () => {
       CREATE TABLE IF NOT EXISTS client_fichas (
         id VARCHAR(64) PRIMARY KEY,
         cliente_id VARCHAR(64) UNIQUE,
-        usa_rimel BOOLEAN DEFAULT false,
-        procedimento_recente_olhos TEXT,
-        possui_alergia BOOLEAN DEFAULT false,
+        usa_rimel VARCHAR(10),
+        problemas_tireoide VARCHAR(10),
+        possui_diabetes VARCHAR(10),
+        gestante VARCHAR(10),
+        procedimento_recente_olhos VARCHAR(10),
+        procedimento_recente_olhos_qual TEXT,
+        possui_alergia VARCHAR(10),
         alergia_qual TEXT,
-        possui_glaucoma_ou_ocular BOOLEAN DEFAULT false,
+        possui_glaucoma_ou_ocular VARCHAR(10),
         glaucoma_ocular_qual TEXT,
-        esta_em_tratamento BOOLEAN DEFAULT false,
+        esta_em_tratamento VARCHAR(10),
         informacoes_adicionais TEXT,
         mapping TEXT,
         estilo TEXT,
         modelo_fios TEXT,
-        espessura TEXT,
-        curvatura TEXT,
-        adesivo_cola TEXT,
+        espessura VARCHAR(50),
+        curvatura VARCHAR(50),
+        adesivo_cola VARCHAR(100),
         atualizado_em TIMESTAMP DEFAULT NOW()
       );
     `);
