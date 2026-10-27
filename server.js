@@ -222,43 +222,89 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
 
   try {
     const existe = await pool.query('SELECT id FROM client_fichas WHERE cliente_id = $1', [clienteId]);
+    
     if (existe.rows.length > 0) {
       await pool.query(
         `UPDATE client_fichas SET 
-         usa_rimel = $1, problemas_tireoide = $2, possui_diabetes = $3, gestante = $4,
-         procedimento_recente_olhos = $5, procedimento_recente_olhos_qual = $6, 
-         possui_alergia = $7, alergia_qual = $8, possui_glaucoma_ou_ocular = $9, 
-         glaucoma_ocular_qual = $10, esta_em_tratamento = $11, informacoes_adicionais = $12, 
-         mapping = $13, estilo = $14, modelo_fios = $15, espessura = $16, curvatura = $17, 
-         adesivo_cola = $18, atualizado_em = NOW() WHERE cliente_id = $19`,
+         usa_rimel = $1, 
+         problemas_tireoide = $2, 
+         possui_diabetes = $3, 
+         gestante = $4,
+         procedimento_recente_olhos = $5, 
+         procedimento_recente_olhos_qual = $6, 
+         possui_alergia = $7, 
+         alergia_qual = $8, 
+         possui_glaucoma_ou_ocular = $9, 
+         glaucoma_ocular_qual = $10, 
+         esta_em_tratamento = $11, 
+         informacoes_adicionais = $12, 
+         mapping = $13, 
+         estilo = $14, 
+         modelo_fios = $15, 
+         espessura = $16, 
+         curvatura = $17, 
+         adesivo_cola = $18, 
+         atualizado_em = NOW() 
+         WHERE cliente_id = $19`,
         [
-          String(usa_rimel || ''), String(problemas_tireoide || ''), String(possui_diabetes || ''), String(gestante || ''),
-          String(procedimento_recente_olhos || ''), String(procedimento_recente_olhos_qual || ''),
-          String(possui_alergia || ''), String(alergia_qual || ''), String(possui_glaucoma_ou_ocular || ''),
-          String(glaucoma_ocular_qual || ''), String(esta_em_tratamento || ''), String(informacoes_adicionais || ''),
-          String(mapping || ''), String(estilo || ''), String(modelo_fios || ''), String(espessura || ''),
-          String(curvatura || ''), String(adesivo_cola || ''), clienteId
+          String(usa_rimel || ''),                     // $1
+          String(problemas_tireoide || ''),            // $2
+          String(possui_diabetes || ''),               // $3
+          String(gestante || ''),                      // $4
+          String(procedimento_recente_olhos || ''),    // $5
+          String(procedimento_recente_olhos_qual || ''),// $6
+          String(possui_alergia || ''),                // $7
+          String(alergia_qual || ''),                  // $8
+          String(possui_glaucoma_ou_ocular || ''),     // $9
+          String(glaucoma_ocular_qual || ''),          // $10
+          String(esta_em_tratamento || ''),            // $11
+          String(informacoes_adicionais || ''),        // $12
+          String(mapping || ''),                       // $13
+          String(estilo || ''),                        // $14
+          String(modelo_fios || ''),                   // $15
+          String(espessura || ''),                     // $16
+          String(curvatura || ''),                     // $17
+          String(adesivo_cola || ''),                  // $18
+          clienteId                                    // $19
         ]
       );
     } else {
       const id = makeId('fich');
       await pool.query(
-        `INSERT INTO client_fichas (id, cliente_id, usa_rimel, problemas_tireoide, possui_diabetes, gestante, procedimento_recente_olhos, procedimento_recente_olhos_qual, possui_alergia, alergia_qual, possui_glaucoma_ou_ocular, glaucoma_ocular_qual, esta_em_tratamento, informacoes_adicionais, mapping, estilo, modelo_fios, espessura, curvatura, adesivo_cola) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+        `INSERT INTO client_fichas (
+          id, cliente_id, usa_rimel, problemas_tireoide, possui_diabetes, gestante, 
+          procedimento_recente_olhos, procedimento_recente_olhos_qual, possui_alergia, 
+          alergia_qual, possui_glaucoma_ou_ocular, glaucoma_ocular_qual, esta_em_tratamento, 
+          informacoes_adicionais, mapping, estilo, modelo_fios, espessura, curvatura, adesivo_cola
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
         [
-          id, clienteId, String(usa_rimel || ''), String(problemas_tireoide || ''), String(possui_diabetes || ''), String(gestante || ''),
-          String(procedimento_recente_olhos || ''), String(procedimento_recente_olhos_qual || ''),
-          String(possui_alergia || ''), String(alergia_qual || ''), String(possui_glaucoma_ou_ocular || ''),
-          String(glaucoma_ocular_qual || ''), String(esta_em_tratamento || ''), String(informacoes_adicionais || ''),
-          String(mapping || ''), String(estilo || ''), String(modelo_fios || ''), String(espessura || ''),
-          String(curvatura || ''), String(adesivo_cola || '')
+          id,                                          // $1
+          clienteId,                                   // $2
+          String(usa_rimel || ''),                     // $3
+          String(problemas_tireoide || ''),            // $4
+          String(possui_diabetes || ''),               // $5
+          String(gestante || ''),                      // $6
+          String(procedimento_recente_olhos || ''),    // $7
+          String(procedimento_recente_olhos_qual || ''),// $8
+          String(possui_alergia || ''),                // $9
+          String(alergia_qual || ''),                  // $10
+          String(possui_glaucoma_ou_ocular || ''),     // $11
+          String(glaucoma_ocular_qual || ''),          // $12
+          String(esta_em_tratamento || ''),            // $13
+          String(informacoes_adicionais || ''),        // $14
+          String(mapping || ''),                       // $15
+          String(estilo || ''),                        // $16
+          String(modelo_fios || ''),                   // $17
+          String(espessura || ''),                     // $18
+          String(curvatura || ''),                     // $19
+          String(adesivo_cola || '')                   // $20
         ]
       );
     }
     res.json({ mensagem: 'Ficha salva com sucesso!' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ mensagem: 'Erro ao salvar ficha.' });
+    console.error("Erro ao salvar ficha:", err);
+    res.status(500).json({ mensagem: 'Erro interno ao salvar ficha.' });
   }
 });
 
