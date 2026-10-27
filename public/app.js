@@ -399,6 +399,11 @@ document.addEventListener('DOMContentLoaded', () => {
     fichaModal.style.display = 'none';
   });
 
+  // BOTÃO DE IMPRESSÃO DA FICHA
+  document.getElementById('btn-imprimir-ficha')?.addEventListener('click', () => {
+    window.print();
+  });
+
   fichaForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const clienteId = fichaClienteId.value;
