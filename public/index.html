@@ -15,7 +15,7 @@
     <style>
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
       .auth-layout { display: flex; width: 100vw; height: 100vh; background: #fff; }
-      .auth-intro { flex: 1; background: linear-gradient(135deg, #e879f9 0%, #a855f7 100%); color: #ffffff; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+      .auth-intro { flex: 1; background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%); color: #ffffff; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; text-shadow: 0 1px 3px rgba(0,0,0,0.2); }
       .auth-intro h1, .auth-intro p, .auth-intro span { color: #ffffff !important; }
       .auth-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; background: #ffffff; }
       .cracha-card { width: 320px; height: 200px; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin: 20px auto; text-align: center; }
@@ -28,13 +28,14 @@
   <body>
     <main id="auth-screen" class="auth-layout">
       <section class="auth-intro">
-        <div class="brand brand-light" style="font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-          <span class="brand-mark" style="background: white; color: #a855f7; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">GH</span>
-          <span style="color: #ffffff;">GH Lash<span class="brand-period" style="color: #fef08a;">.</span></span>
+        <div class="brand brand-light" style="font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px;">
+          <!-- Quadrado ajustado com fundo escuro elegante e letras em branco nítido -->
+          <span class="brand-mark" style="background: #2e1065; color: #ffffff; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2);">GH</span>
+          <span style="color: #ffffff; letter-spacing: 0.5px;">GH Lash<span class="brand-period" style="color: #fde047;">.</span></span>
         </div>
         <div class="intro-copy">
-          <p class="eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #ffffff; font-weight: 800;">BEM-VINDA AO GH LASH STUDIO</p>
-          <h1 style="font-size: 38px; line-height: 1.2; margin: 20px 0; color: #ffffff; font-weight: 800;">O olhar perfeito,<br><span style="color: #fef08a;">na hora certa.</span></h1>
+          <p class="eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #fde047; font-weight: 800;">REFERÊNCIA EM EXTENSÃO DE CÍLIOS</p>
+          <h1 style="font-size: 38px; line-height: 1.25; margin: 20px 0; color: #ffffff; font-weight: 800;">Realce sua beleza natural,<br><span style="color: #fde047;">um olhar marcante de cada vez.</span></h1>
         </div>
       </section>
 
@@ -58,12 +59,12 @@
               <input name="senha" type="password" required placeholder="Sua senha" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
             </label>
 
-            <button class="button button-primary button-wide" type="submit" style="background: #a855f7; color: white; border: none; padding: 11px; font-weight: bold; border-radius: 8px; cursor: pointer;">Entrar</button>
+            <button class="button button-primary button-wide" type="submit" style="background: #7c3aed; color: white; border: none; padding: 11px; font-weight: bold; border-radius: 8px; cursor: pointer;">Entrar</button>
             <p class="form-message" id="auth-message" role="status" style="color: #dc3545; font-size: 12px;"></p>
           </form>
 
           <div class="auth-switch" style="margin-top: 1.2rem; display: flex; gap: 1rem; justify-content: center;">
-            <button type="button" data-auth-mode="login" class="is-active" style="background:none; border:none; cursor:pointer; font-weight:600; color: #a855f7;">Já tenho conta</button>
+            <button type="button" data-auth-mode="login" class="is-active" style="background:none; border:none; cursor:pointer; font-weight:600; color: #7c3aed;">Já tenho conta</button>
             <button type="button" data-auth-mode="register" style="background:none; border:none; cursor:pointer; font-weight:600; color: #64748b;">Criar conta</button>
           </div>
         </div>
@@ -73,7 +74,7 @@
     <div id="app-screen" class="app-shell" hidden>
       <header class="topbar">
         <a class="brand brand-dark" href="#agenda">
-          <span class="brand-mark" style="background: #a855f7; color: white;">GH</span>
+          <span class="brand-mark" style="background: #7c3aed; color: white;">GH</span>
           <span>GH Lash Studio</span>
         </a>
         <nav class="main-nav">
@@ -141,7 +142,7 @@
                   <input type="datetime-local" name="data_hora" required>
                 </label>
                 <div class="form-actions">
-                  <button type="submit" class="button button-primary button-wide" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Confirmar agendamento</button>
+                  <button type="submit" class="button button-primary button-wide" style="background: #7c3aed; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Confirmar agendamento</button>
                 </div>
                 <p class="form-message" id="appointment-message" role="status"></p>
               </form>
@@ -181,7 +182,7 @@
                   <input type="number" name="duracao_minutos" required placeholder="90" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
                 </label>
                 <div style="display: flex; gap: 8px; margin-top: 5px;">
-                  <button id="service-submit" type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; flex: 1;">Adicionar serviço</button>
+                  <button id="service-submit" type="submit" class="button button-primary" style="background: #7c3aed; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; flex: 1;">Adicionar serviço</button>
                   <button id="service-cancel" type="button" class="button button-secondary" hidden style="background: #64748b; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">Cancelar</button>
                 </div>
                 <p class="form-message" id="service-message" role="status"></p>
@@ -223,7 +224,7 @@
                 <label class="field">CPF
                   <input type="text" name="cpf" placeholder="000.000.000-00" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
                 </label>
-                <button type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-top: 5px;">Cadastrar Cliente</button>
+                <button type="submit" class="button button-primary" style="background: #7c3aed; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-top: 5px;">Cadastrar Cliente</button>
               </form>
             </section>
             <section class="management-panel card">
@@ -237,7 +238,7 @@
         <div id="ficha-modal" class="modal-overlay">
           <div class="modal-card">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
-              <h3 style="margin: 0;">Ficha de Procedimento: <span id="ficha-cliente-nome" style="color: #a855f7;"></span></h3>
+              <h3 style="margin: 0;">Ficha de Procedimento: <span id="ficha-cliente-nome" style="color: #7c3aed;"></span></h3>
               <button type="button" id="close-ficha-modal" style="background: none; border: none; font-size: 18px; cursor: pointer; font-weight: bold;">✕</button>
             </div>
 
@@ -328,7 +329,7 @@
               </label>
 
               <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
-              <h4 style="margin: 0; font-size: 14px; color: #a855f7;">Detalhes dos Procedimentos de Cílios</h4>
+              <h4 style="margin: 0; font-size: 14px; color: #7c3aed;">Detalhes dos Procedimentos de Cílios</h4>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <label class="field" style="font-size: 12px; font-weight: bold;">Mapping:
@@ -344,7 +345,7 @@
                   <input type="text" name="espessura" placeholder="Ex: 0.07" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
                 </label>
                 <label class="field" style="font-size: 12px; font-weight: bold;">Curvatura:
-                  <input type="text" name="cluvatura" placeholder="Ex: C, CC, D" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
+                  <input type="text" name="curvatura" placeholder="Ex: C, CC, D" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
                 </label>
                 <label class="field" style="font-size: 12px; font-weight: bold;">Adesivo ou Cola:
                   <input type="text" name="adesivo_cola" placeholder="Ex: Master Exotik" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
@@ -352,7 +353,7 @@
               </div>
 
               <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-                <button type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight: bold;">Salvar Ficha</button>
+                <button type="submit" class="button button-primary" style="background: #7c3aed; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight: bold;">Salvar Ficha</button>
               </div>
             </form>
           </div>
@@ -365,7 +366,7 @@
           <div class="card" style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
             <label style="font-size: 12px; font-weight: bold;">Data Início: <input type="date" id="filtro-inicio" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da;"></label>
             <label style="font-size: 12px; font-weight: bold;">Data Fim: <input type="date" id="filtro-fim" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da;"></label>
-            <button type="button" id="filtrar-metricas" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer;">Filtrar Período</button>
+            <button type="button" id="filtrar-metricas" class="button button-primary" style="background: #7c3aed; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer;">Filtrar Período</button>
           </div>
           <div class="stats-row">
             <article class="stat-block"><span class="stat-label">ATENDIMENTOS CONCLUÍDOS</span><strong id="metric-total-atendimentos">0</strong></article>
