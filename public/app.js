@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('div');
             row.className = 'appointment-item';
             row.style.cursor = 'pointer';
-            row.title = 'Clique para enviar mensagem simultânea no WhatsApp da cliente e admin';
+            row.title = 'Clique para enviar mensagem no WhatsApp da cliente';
 
             const isMaster = currentUser?.tipo === 'master';
             const status = apt.status || 'pendente';
@@ -701,23 +701,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
               }
 
-              // 1. Mensagem para a cliente (Variável urlWhatsAppCliente)
-              const telefoneLimpoCliente = telefone.replace(/\D/g, '');
-              const mensagemCliente = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
-              const urlWhatsAppCliente = `https://wa.me/55${telefoneLimpoCliente.startsWith('55') ? telefoneLimpoCliente.slice(2) : telefoneLimpoCliente}?text=${encodeURIComponent(mensagemCliente)}`;
-              
-              // 2. Mensagem para o número administrativo fixo (Variável urlWhatsAppAdmin - 19 98745-5848)
-              const numeroAdmin = '5519987455848';
-              const mensagemAdmin = `[CÓPIA - LEMBRETE] Agendamento de *${apt.usuario_nome}* (${apt.servico_nome}) marcado para *${formatDateTime(apt.data_hora)}*.`;
-              const urlWhatsAppAdmin = `https://wa.me/${numeroAdmin}?text=${encodeURIComponent(mensagemAdmin)}`;
+              // Apenas abre o WhatsApp para a cliente com a mensagem pronta
+              const telefoneLimpo = telefone.replace(/\D/g, '');
+              const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
+              const urlWhatsApp = `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}`;
 
-              // Abre a aba da cliente
-              window.open(urlWhatsAppCliente, '_blank');
-
-              // Abre a aba do número administrativo com 800ms de intervalo
-              setTimeout(() => {
-                window.open(urlWhatsAppAdmin, '_blank');
-              }, 800);
+              window.open(urlWhatsApp, '_blank');
             });
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'concluir'));
@@ -786,32 +775,3 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(err.message, true);
     }
   });
-
-  logoutButton?.addEventListener('click', () => {
-    clearSession();
-    showToast('Sessão encerrada.');
-  });
-
-  const boot = async () => {
-    setAuthMode('login');
-    setActiveView('agenda');
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        currentUser = JSON.parse(saved);
-        fillAccount(currentUser);
-        updateAdminVisibility();
-        appScreen.hidden = false;
-        authScreen.hidden = true;
-        renderServices();
-        renderAppointments();
-        loadRegisteredClients();
-        return;
-      }
-    } catch (e) {}
-    authScreen.hidden = false;
-    appScreen.hidden = true;
-  };
-
-  boot();
-});
