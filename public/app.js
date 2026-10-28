@@ -91,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (submitButton) submitButton.textContent = isRegister ? 'Criar conta' : 'Entrar';
   };
 
-  // Função para renderizar métricas e exibir os atendimentos concluídos detalhados
   const renderMasterMetrics = async () => {
     const totalEl = document.getElementById('metric-total-atendimentos');
     const faturamentoEl = document.getElementById('metric-faturamento');
@@ -109,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (faturamentoEl) faturamentoEl.textContent = formatCurrency(metrics.faturamentoTotal);
       if (mediaEl) mediaEl.textContent = formatCurrency(metrics.mediaFaturamentoPorAtendimento);
 
-      // Busca todos os agendamentos para filtrar e exibir a lista detalhada
       const appointments = await apiFetch('/agendamentos');
       const concluidos = appointments.filter(a => {
         if ((a.status || 'pendente') !== 'concluido') return false;
@@ -415,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         card.querySelector('[data-action="editar"]').addEventListener('click', () => {
-          clientIdInput.value = c.id;
+          if (clientIdInput) clientIdInput.value = c.id;
           clientForm.nome.value = c.nome || '';
           clientForm.data_nascimento.value = c.data_nascimento || '';
           clientForm.profissao.value = c.profissao || '';
@@ -461,7 +459,8 @@ document.addEventListener('DOMContentLoaded', () => {
   clientForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(clientForm);
-    const id = formData.get('id');
+    const id = formData.get('id'); // Pega o ID caso esteja editando
+
     try {
       await apiFetch(id ? `/clientes/${id}` : '/clientes', {
         method: id ? 'PUT' : 'POST',
