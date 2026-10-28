@@ -126,33 +126,38 @@
 
         <section class="view-panel is-visible" id="agenda-view">
           <div class="agenda-layout">
-            <section class="booking-panel card">
-              <div class="panel-heading">
-                <span class="panel-icon">＋</span>
-                <div>
-                  <h3>Novo Agendamento</h3>
-                  <p>Escolha o procedimento e o horário desejado.</p>
-                </div>
-              </div>
+            <!-- COLUNA DA ESQUERDA: CALENDÁRIO LATERAL + FORMULÁRIO DE NOVO AGENDAMENTO -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div id="calendario-lateral"></div>
 
-              <form id="appointment-form" class="form-stack">
-                <label class="field">Nome da Cliente
-                  <input type="text" name="usuario_nome" id="input-usuario-nome" placeholder="Digite o nome da cliente" required style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box;">
-                </label>
-                <label class="field">Procedimento
-                  <select id="service-select" name="servico_id" required>
-                    <option value="">Carregando serviços...</option>
-                  </select>
-                </label>
-                <label class="field">Data e Hora
-                  <input type="datetime-local" name="data_hora" required>
-                </label>
-                <div class="form-actions">
-                  <button type="submit" class="button button-primary button-wide" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Confirmar agendamento</button>
+              <section class="booking-panel card" style="margin-top: 0;">
+                <div class="panel-heading">
+                  <span class="panel-icon">＋</span>
+                  <div>
+                    <h3>Novo Agendamento</h3>
+                    <p>Escolha o procedimento e o horário desejado.</p>
+                  </div>
                 </div>
-                <p class="form-message" id="appointment-message" role="status"></p>
-              </form>
-            </section>
+
+                <form id="appointment-form" class="form-stack">
+                  <label class="field">Nome da Cliente
+                    <input type="text" name="usuario_nome" id="input-usuario-nome" placeholder="Digite o nome da cliente" required style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box;">
+                  </label>
+                  <label class="field">Procedimento
+                    <select id="service-select" name="servico_id" required>
+                      <option value="">Carregando serviços...</option>
+                    </select>
+                  </label>
+                  <label class="field">Data e Hora
+                    <input type="datetime-local" name="data_hora" required>
+                  </label>
+                  <div class="form-actions">
+                    <button type="submit" class="button button-primary button-wide" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Confirmar agendamento</button>
+                  </div>
+                  <p class="form-message" id="appointment-message" role="status"></p>
+                </form>
+              </section>
+            </div>
 
             <section class="reservations-panel card">
               <div class="filter-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
