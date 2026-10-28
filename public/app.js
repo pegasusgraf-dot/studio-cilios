@@ -775,3 +775,32 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(err.message, true);
     }
   });
+
+  logoutButton?.addEventListener('click', () => {
+    clearSession();
+    showToast('Sessão encerrada.');
+  });
+
+  const boot = async () => {
+    setAuthMode('login');
+    setActiveView('agenda');
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        currentUser = JSON.parse(saved);
+        fillAccount(currentUser);
+        updateAdminVisibility();
+        appScreen.hidden = false;
+        authScreen.hidden = true;
+        renderServices();
+        renderAppointments();
+        loadRegisteredClients();
+        return;
+      }
+    } catch (e) {}
+    authScreen.hidden = false;
+    appScreen.hidden = true;
+  };
+
+  boot();
+});
