@@ -112,6 +112,59 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Filtro aplicado!');
   });
 
+  // Função para exportar os atendimentos concluídos para CSV
+  const exportarAtendimentosCSV = async () => {
+    const inicio = document.getElementById('filtro-inicio')?.value;
+    const fim = document.getElementById('filtro-fim')?.value;
+
+    try {
+      const appointments = await apiFetch('/agendamentos');
+      const concluidos = appointments.filter(a => {
+        if ((a.status || 'pendente') !== 'concluido') return false;
+        if (!inicio && !fim) return true;
+        
+        const dataAtendimento = new Date(a.data_hora).toISOString().split('T')[0];
+        if (inicio && dataAtendimento < inicio) return false;
+        if (fim && dataAtendimento > fim) return false;
+        return true;
+      });
+
+      if (!concluidos.length) {
+        showToast('Nenhum atendimento concluído encontrado no período para exportar.', true);
+        return;
+      }
+
+      let csvContent = 'ID;Cliente;Procedimento;Data/Hora;Valor (R$)\n';
+
+      concluidos.forEach(a => {
+        const nomeCliente = (a.usuario_nome || '').replace(/;/g, ',');
+        const nomeServico = (a.servico_nome || '').replace(/;/g, ',');
+        const dataFormatada = formatDateTime(a.data_hora);
+        const valorFormatado = Number(a.valor || 0).toFixed(2).replace('.', ',');
+
+        csvContent += `${a.id};${nomeCliente};${nomeServico};${dataFormatada};${valorFormatado}\n`;
+      });
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `atendimentos_concluidos_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('Relatório CSV exportado com sucesso!');
+    } catch (err) {
+      showToast('Erro ao exportar CSV: ' + err.message, true);
+    }
+  };
+
+  document.getElementById('btn-exportar-csv')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    exportarAtendimentosCSV();
+  });
+
   const setActiveView = (viewName) => {
     navButtons.forEach(btn => btn.classList.toggle('is-active', btn.dataset.view === viewName));
     viewPanels.forEach(panel => {
@@ -509,7 +562,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('empty-state');
 
     try {
-      // Garante que temos a lista de clientes carregada para buscar o WhatsApp
       if (!registeredClients.length) {
         try { registeredClients = await apiFetch('/clientes'); } catch (e) {}
       }
@@ -570,9 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
 
-            // Evento de clique no card para abrir o WhatsApp
             row.addEventListener('click', () => {
-              // Busca a cliente cadastrada pelo nome para pegar o telefone correto
               const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
               const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
 
