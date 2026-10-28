@@ -637,9 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const diffTime = dataApt - hoje;
       const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-      // Se o agendamento for exatamente para amanhã (1 dia antes)
       if (diffDays === 1) {
-        // Usa sessionStorage para não disparar o popup infinitas vezes na mesma sessão
         const chaveAviso = `aviso_amanha_${apt.id}`;
         if (!sessionStorage.getItem(chaveAviso)) {
           alert(`⚠️ Lembrete de Reserva:\nAmanhã (${formatDateTime(apt.data_hora)}) você tem atendimento agendado com ${apt.usuario_nome} (${apt.servico_nome})!`);
@@ -654,7 +652,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('calendario-lateral');
     if (!container) return;
 
-    // Converte todas as datas de agendamentos pendentes para formato 'YYYY-MM-DD'
     const datasComAgendamento = appointments
       .filter(a => (a.status || 'pendente') === 'pendente')
       .map(a => new Date(a.data_hora).toISOString().split('T')[0]);
@@ -675,12 +672,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 12px;">
     `;
 
-    // Espaços vazios iniciais
     for (let i = 0; i < primeiroDiaMes; i++) {
       html += `<div></div>`;
     }
 
-    // Dias do mês
     for (let dia = 1; dia <= ultimoDiaMes; dia++) {
       const mesStr = String(mes + 1).padStart(2, '0');
       const diaStr = String(dia).padStart(2, '0');
@@ -688,7 +683,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const temReserva = datasComAgendamento.includes(dataFormatada);
       
-      // Estilo do dia circulado caso tenha agendamento
       const estiloCirculo = temReserva 
         ? 'background: #fdf2f8; border: 2px solid #db2777; color: #db2777; font-weight: bold; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto;' 
         : 'padding: 4px;';
@@ -714,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const appointments = await apiFetch('/agendamentos');
       
-      // Executa as verificações extras solicitadas
       verificarLembretesVéspera(appointments);
       renderizarCalendarioLateral(appointments);
 
@@ -773,11 +766,9 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
 
-            // 1. Correção para abrir o WhatsApp apenas uma vez ao clicar no card
-            // Removemos listeners antigos clonando o nó se necessário, ou garantimos que a lógica executa de forma limpa
+            // WhatsApp abre uma única vez de forma limpa ao clicar no card
             row.onclick = (e) => {
               e.stopPropagation();
-              
               const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
               const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
 
