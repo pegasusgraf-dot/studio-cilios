@@ -26,11 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputUsuarioNome = document.getElementById('input-usuario-nome');
   
   const clientForm = document.getElementById('client-form');
-  const clientIdInput = document.getElementById('client-id');
-  const clientFormTitle = document.getElementById('client-form-title');
-  const clientSubmitBtn = document.getElementById('client-submit-btn');
-  const clientCancelBtn = document.getElementById('client-cancel-btn');
-
   const fichaModal = document.getElementById('ficha-modal');
   const fichaForm = document.getElementById('ficha-form');
   const fichaClienteNome = document.getElementById('ficha-cliente-nome');
@@ -95,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalEl = document.getElementById('metric-total-atendimentos');
     const faturamentoEl = document.getElementById('metric-faturamento');
     const mediaEl = document.getElementById('metric-media');
-    const listaConcluidosEl = document.getElementById('lista-atendimentos-concluidos');
     const inicio = document.getElementById('filtro-inicio')?.value;
     const fim = document.getElementById('filtro-fim')?.value;
 
@@ -107,45 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (totalEl) totalEl.textContent = metrics.totalAtendimentos || 0;
       if (faturamentoEl) faturamentoEl.textContent = formatCurrency(metrics.faturamentoTotal);
       if (mediaEl) mediaEl.textContent = formatCurrency(metrics.mediaFaturamentoPorAtendimento);
-
-      const appointments = await apiFetch('/agendamentos');
-      const concluidos = appointments.filter(a => {
-        if ((a.status || 'pendente') !== 'concluido') return false;
-        if (!inicio && !fim) return true;
-        const dataAtendimento = new Date(a.data_hora).toISOString().split('T')[0];
-        if (inicio && dataAtendimento < inicio) return false;
-        if (fim && dataAtendimento > fim) return false;
-        return true;
-      });
-
-      if (listaConcluidosEl) {
-        if (!concluidos.length) {
-          listaConcluidosEl.innerHTML = '<p class="muted">Nenhum atendimento concluído encontrado no período.</p>';
-        } else {
-          listaConcluidosEl.innerHTML = '';
-          concluidos.forEach(a => {
-            const item = document.createElement('div');
-            item.className = 'service-item';
-            item.style.display = 'flex';
-            item.style.justifyContent = 'space-between';
-            item.style.alignItems = 'center';
-            item.style.padding = '10px 12px';
-            item.style.background = '#f8fafc';
-            item.style.borderRadius = '6px';
-
-            item.innerHTML = `
-              <div>
-                <strong>${a.servico_nome || 'Procedimento'}</strong>
-                <div class="muted" style="font-size: 12px;">Cliente: <strong>${a.usuario_nome || '—'}</strong> • ${formatDateTime(a.data_hora)}</div>
-              </div>
-              <div style="font-weight: bold; color: #16a34a; font-size: 14px;">
-                ${formatCurrency(a.valor)}
-              </div>
-            `;
-            listaConcluidosEl.appendChild(item);
-          });
-        }
-      }
     } catch (err) {
       console.error(err);
     }
@@ -155,55 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     renderMasterMetrics();
     showToast('Filtro aplicado!');
-  });
-
-  const exportarAtendimentosCSV = async () => {
-    const inicio = document.getElementById('filtro-inicio')?.value;
-    const fim = document.getElementById('filtro-fim')?.value;
-
-    try {
-      const appointments = await apiFetch('/agendamentos');
-      const concluidos = appointments.filter(a => {
-        if ((a.status || 'pendente') !== 'concluido') return false;
-        if (!inicio && !fim) return true;
-        const dataAtendimento = new Date(a.data_hora).toISOString().split('T')[0];
-        if (inicio && dataAtendimento < inicio) return false;
-        if (fim && dataAtendimento > fim) return false;
-        return true;
-      });
-
-      if (!concluidos.length) {
-        showToast('Nenhum atendimento concluído encontrado no período para exportar.', true);
-        return;
-      }
-
-      let csvContent = 'ID;Cliente;Procedimento;Data/Hora;Valor (R$)\n';
-      concluidos.forEach(a => {
-        const nomeCliente = (a.usuario_nome || '').replace(/;/g, ',');
-        const nomeServico = (a.servico_nome || '').replace(/;/g, ',');
-        const dataFormatada = formatDateTime(a.data_hora);
-        const valorFormatado = Number(a.valor || 0).toFixed(2).replace('.', ',');
-        csvContent += `${a.id};${nomeCliente};${nomeServico};${dataFormatada};${valorFormatado}\n`;
-      });
-
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `atendimentos_concluidos_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      showToast('Relatório CSV exportado com sucesso!');
-    } catch (err) {
-      showToast('Erro ao exportar CSV: ' + err.message, true);
-    }
-  };
-
-  document.getElementById('btn-exportar-csv')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    exportarAtendimentosCSV();
   });
 
   const setActiveView = (viewName) => {
@@ -262,6 +168,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Pop-up executado ao logar avisando sobre o dia seguinte
+  const verificarLembretesVésperaNoLogin = async () => {
+    try {
+      const appointments = await apiFetch('/agendamentos');
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+
+      appointments.forEach(apt => {
+        if ((apt.status || 'pendente') !== 'pendente') return;
+        const dataApt = new Date(apt.data_hora);
+        dataApt.setHours(0, 0, 0, 0);
+
+        const diffTime = dataApt - hoje;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          const chaveAviso = `aviso_login_amanha_${apt.id}`;
+          if (!sessionStorage.getItem(chaveAviso)) {
+            alert(`⚠️ Lembrete de Reserva:\nAmanhã (${formatDateTime(apt.data_hora)}) você tem atendimento agendado com ${apt.usuario_nome} (${apt.servico_nome})!`);
+            sessionStorage.setItem(chaveAviso, 'true');
+          }
+        }
+      });
+    } catch (e) {}
+  };
+
   const saveSession = (user) => {
     currentUser = user;
     localStorage.setItem(storageKey, JSON.stringify(user));
@@ -273,8 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderServices();
     renderAppointments();
     loadRegisteredClients();
-    
-    // Dispara o pop-up de aviso de agendamento do dia seguinte logo após logar
     verificarLembretesVésperaNoLogin();
   };
 
@@ -399,8 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
             <strong>${c.nome}</strong>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <button class="button" data-action="ficha" style="background: #a855f7; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Ficha</button>
-              <button class="button" data-action="editar" style="background: #3b82f6; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Editar</button>
+              <button class="button" data-action="ficha" style="background: #a855f7; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Ficha / Histórico</button>
               <button class="button button-danger" data-action="excluir" style="background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Excluir</button>
             </div>
           </div>
@@ -413,21 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="grid-column: span 2;"><strong>E-mail:</strong> ${c.email || '—'}</span>
           </div>
         `;
-
-        card.querySelector('[data-action="editar"]').addEventListener('click', () => {
-          if (clientIdInput) clientIdInput.value = c.id;
-          clientForm.nome.value = c.nome || '';
-          clientForm.data_nascimento.value = c.data_nascimento || '';
-          clientForm.profissao.value = c.profissao || '';
-          clientForm.endereco.value = c.endereco || '';
-          clientForm.telefone.value = c.telefone || '';
-          clientForm.email.value = c.email || '';
-          clientForm.cpf.value = c.cpf || '';
-          if (clientFormTitle) clientFormTitle.textContent = `Editar Cliente: ${c.nome}`;
-          if (clientSubmitBtn) clientSubmitBtn.textContent = 'Salvar Alterações';
-          if (clientCancelBtn) clientCancelBtn.hidden = false;
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
 
         card.querySelector('[data-action="excluir"]').addEventListener('click', async () => {
           if (confirm(`Deseja excluir o cadastro de ${c.nome}?`)) {
@@ -449,45 +363,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (e) { console.error(e); }
   };
-
-  clientCancelBtn?.addEventListener('click', () => {
-    clientForm.reset();
-    if (clientIdInput) clientIdInput.value = '';
-    if (clientFormTitle) clientFormTitle.textContent = 'Cadastrar Nova Cliente';
-    if (clientSubmitBtn) clientSubmitBtn.textContent = 'Cadastrar Cliente';
-    if (clientCancelBtn) clientCancelBtn.hidden = true;
-  });
-
-  clientForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(clientForm);
-    const id = formData.get('id');
-
-    try {
-      await apiFetch(id ? `/clientes/${id}` : '/clientes', {
-        method: id ? 'PUT' : 'POST',
-        body: JSON.stringify({
-          nome: formData.get('nome'),
-          email: formData.get('email'),
-          data_nascimento: formData.get('data_nascimento'),
-          profissao: formData.get('profissao'),
-          endereco: formData.get('endereco'),
-          telefone: formData.get('telefone'),
-          cpf: formData.get('cpf')
-        })
-      });
-      clientForm.reset();
-      if (clientIdInput) clientIdInput.value = '';
-      if (clientFormTitle) clientFormTitle.textContent = 'Cadastrar Nova Cliente';
-      if (clientSubmitBtn) clientSubmitBtn.textContent = 'Cadastrar Cliente';
-      if (clientCancelBtn) clientCancelBtn.hidden = true;
-      renderClients();
-      loadRegisteredClients();
-      showToast(id ? 'Cliente atualizada com sucesso!' : 'Cliente cadastrada com sucesso!');
-    } catch (err) {
-      showToast(err.message, true);
-    }
-  });
 
   const abrirFichaModal = async (cliente) => {
     if (!fichaModal) return;
@@ -604,6 +479,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  clientForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(clientForm);
+    try {
+      await apiFetch('/clientes', {
+        method: 'POST',
+        body: JSON.stringify({
+          nome: formData.get('nome'),
+          email: formData.get('email'),
+          data_nascimento: formData.get('data_nascimento'),
+          profissao: formData.get('profissao'),
+          endereco: formData.get('endereco'),
+          telefone: formData.get('telefone'),
+          cpf: formData.get('cpf')
+        })
+      });
+      clientForm.reset();
+      renderClients();
+      loadRegisteredClients();
+      showToast('Cliente cadastrado com sucesso!');
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+
   const alterarStatusAtendimento = async (id, acao) => {
     try {
       await apiFetch(`/agendamentos/${id}/${acao}`, { method: 'PATCH' });
@@ -625,32 +525,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       showToast(e.message || 'Erro ao excluir agendamento', true);
     }
-  };
-
-  // Pop-up de lembrete de véspera executado ao logar
-  const verificarLembretesVésperaNoLogin = async () => {
-    try {
-      const appointments = await apiFetch('/agendamentos');
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-
-      appointments.forEach(apt => {
-        if ((apt.status || 'pendente') !== 'pendente') return;
-        const dataApt = new Date(apt.data_hora);
-        dataApt.setHours(0, 0, 0, 0);
-
-        const diffTime = dataApt - hoje;
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 1) {
-          const chaveAviso = `aviso_login_amanha_${apt.id}`;
-          if (!sessionStorage.getItem(chaveAviso)) {
-            alert(`⚠️ Lembrete de Reserva:\nAmanhã (${formatDateTime(apt.data_hora)}) você tem atendimento agendado com ${apt.usuario_nome} (${apt.servico_nome})!`);
-            sessionStorage.setItem(chaveAviso, 'true');
-          }
-        }
-      });
-    } catch (e) {}
   };
 
   // Renderizador do mini-calendário lateral com dias circulados
@@ -741,26 +615,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           if (emptyState) emptyState.hidden = true;
           filtered.forEach(apt => {
-            const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
-            const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
-            
-            const telefoneLimpo = telefone ? telefone.replace(/\D/g, '') : '';
-            const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
-            const urlWhatsApp = telefoneLimpo 
-              ? `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}` 
-              : '#';
-
-            const row = document.createElement('a');
-            row.href = telefoneLimpo ? urlWhatsApp : '#';
-            row.target = '_blank';
+            const row = document.createElement('div');
             row.className = 'appointment-item';
             row.style.cursor = 'pointer';
-            row.style.textDecoration = 'none';
-            row.style.color = 'inherit';
-            row.style.display = 'flex';
-            row.style.justifyContent = 'space-between';
-            row.style.alignItems = 'center';
-            row.title = telefone ? 'Clique para enviar mensagem no WhatsApp da cliente' : 'Cliente sem telefone cadastrado';
+            row.title = 'Clique para enviar mensagem no WhatsApp da cliente';
 
             const isMaster = currentUser?.tipo === 'master';
             const status = apt.status || 'pendente';
@@ -777,7 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   Status: ${status.toUpperCase()}
                 </div>
               </div>
-              <div style="display: flex; gap: 6px; align-items: center;" onclick="event.preventDefault(); event.stopPropagation();">
+              <div style="display: flex; gap: 6px; align-items: center;" onclick="event.stopPropagation()">
                 <div class="value-badge">${formatCurrency(apt.valor)}</div>
                 ${isMaster && status === 'pendente' ? `
                   <button class="button" data-action="concluir" data-id="${apt.id}" style="background:#16a34a; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Concluir</button>
@@ -787,28 +645,32 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
 
-            row.addEventListener('click', (e) => {
+            // Controle de debounce antirrepetição para o WhatsApp abrir 1 única vez
+            let abrindoWhatsApp = false;
+            row.addEventListener('click', () => {
+              if (abrindoWhatsApp) return;
+
+              const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
+              const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
+
               if (!telefone) {
-                e.preventDefault();
                 showToast(`Cliente "${apt.usuario_nome}" não possui telefone cadastrado na ficha.`, true);
+                return;
               }
+
+              abrindoWhatsApp = true;
+              setTimeout(() => { abrindoWhatsApp = false; }, 800);
+
+              const telefoneLimpo = telefone.replace(/\D/g, '');
+              const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá! `;
+              const urlWhatsApp = `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}`;
+              
+              window.open(urlWhatsApp, '_blank');
             });
 
-            row.querySelector('[data-action="concluir"]')?.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              alterarStatusAtendimento(apt.id, 'concluir');
-            });
-            row.querySelector('[data-action="cancelar"]')?.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              alterarStatusAtendimento(apt.id, 'cancelar');
-            });
-            row.querySelector('[data-action="excluir"]')?.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              excluirAgendamento(apt.id);
-            });
+            row.querySelector('[data-action="concluir"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'concluir'));
+            row.querySelector('[data-action="cancelar"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'cancelar'));
+            row.querySelector('[data-action="excluir"]')?.addEventListener('click', () => excluirAgendamento(apt.id));
 
             listEl.appendChild(row);
           });
@@ -892,7 +754,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderServices();
         renderAppointments();
         loadRegisteredClients();
-        
         verificarLembretesVésperaNoLogin();
         return;
       }
