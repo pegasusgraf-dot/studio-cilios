@@ -178,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setActiveView('agenda');
     renderServices();
     renderAppointments();
+    loadRegisteredClients();
   };
 
   const clearSession = () => {
@@ -399,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fichaModal.style.display = 'none';
   });
 
-  // BOTÃO DE IMPRESSÃO DA FICHA
   document.getElementById('btn-imprimir-ficha')?.addEventListener('click', () => {
     window.print();
   });
@@ -509,6 +509,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('empty-state');
 
     try {
+      // Garante que temos a lista de clientes carregada para buscar o WhatsApp
+      if (!registeredClients.length) {
+        try { registeredClients = await apiFetch('/clientes'); } catch (e) {}
+      }
+
       const appointments = await apiFetch('/agendamentos');
       const filterVal = appointmentFilter ? appointmentFilter.value : 'todos';
       let filtered = filterVal === 'todos' ? appointments : appointments.filter(a => String(a.servico_id) === filterVal);
@@ -537,6 +542,9 @@ document.addEventListener('DOMContentLoaded', () => {
           filtered.forEach(apt => {
             const row = document.createElement('div');
             row.className = 'appointment-item';
+            row.style.cursor = 'pointer';
+            row.title = 'Clique para enviar mensagem no WhatsApp da cliente';
+
             const isMaster = currentUser?.tipo === 'master';
             const status = apt.status || 'pendente';
 
@@ -546,13 +554,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             row.innerHTML = `
               <div>
-                <strong>${apt.servico_nome}</strong>
+                <strong>${apt.servico_nome} 💬</strong>
                 <div class="muted">Cliente: <strong>${apt.usuario_nome}</strong> • ${formatDateTime(apt.data_hora)}</div>
                 <div style="font-size: 11px; margin-top: 4px; color: ${statusCor}; font-weight: bold;">
                   Status: ${status.toUpperCase()}
                 </div>
               </div>
-              <div style="display: flex; gap: 6px; align-items: center;">
+              <div style="display: flex; gap: 6px; align-items: center;" onclick="event.stopPropagation()">
                 <div class="value-badge">${formatCurrency(apt.valor)}</div>
                 ${isMaster && status === 'pendente' ? `
                   <button class="button" data-action="concluir" data-id="${apt.id}" style="background:#16a34a; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Concluir</button>
@@ -561,6 +569,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${isMaster ? `<button class="button button-danger" data-action="excluir" data-id="${apt.id}" style="background:#64748b; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Excluir</button>` : ''}
               </div>
             `;
+
+            // Evento de clique no card para abrir o WhatsApp
+            row.addEventListener('click', () => {
+              // Busca a cliente cadastrada pelo nome para pegar o telefone correto
+              const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
+              const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
+
+              if (!telefone) {
+                showToast(`Cliente "${apt.usuario_nome}" não possui telefone cadastrado na ficha.`, true);
+                return;
+              }
+
+              const telefoneLimpo = telefone.replace(/\D/g, '');
+              const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá! ✨`;
+              const urlWhatsApp = `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}`;
+              
+              window.open(urlWhatsApp, '_blank');
+            });
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'concluir'));
             row.querySelector('[data-action="cancelar"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'cancelar'));
