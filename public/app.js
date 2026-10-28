@@ -378,7 +378,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { showToast(e.message, true); }
   });
 
-  // CADASTRO E EDIÇÃO DE CLIENTES
   const renderClients = async () => {
     const listEl = document.getElementById('client-list');
     if (!listEl) return;
@@ -459,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
   clientForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(clientForm);
-    const id = formData.get('id'); // Pega o ID caso esteja editando
+    const id = formData.get('id');
 
     try {
       await apiFetch(id ? `/clientes/${id}` : '/clientes', {
