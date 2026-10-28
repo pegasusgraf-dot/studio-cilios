@@ -174,6 +174,40 @@ app.post('/api/clientes', requireAuth, requireMaster, async (req, res) => {
   }
 });
 
+// ROTA ADICIONADA: ATUALIZAR / EDITAR CLIENTE
+app.put('/api/clientes/:id', requireAuth, requireMaster, async (req, res) => {
+  const id = String(req.params.id || '').trim();
+  const nome = String(req.body.nome || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const data_nascimento = String(req.body.data_nascimento || '').trim();
+  const profissao = String(req.body.profissao || '').trim();
+  const endereco = String(req.body.endereco || '').trim();
+  const telefone = String(req.body.telefone || '').trim();
+  const cpf = String(req.body.cpf || '').trim();
+
+  if (!nome) {
+    return res.status(400).json({ mensagem: 'O nome do cliente é obrigatório.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE clients 
+       SET nome = $1, email = $2, data_nascimento = $3, profissao = $4, endereco = $5, telefone = $6, cpf = $7 
+       WHERE id = $8 RETURNING *`,
+      [nome, email, data_nascimento, profissao, endereco, telefone, cpf, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ mensagem: 'Cliente não encontrada.' });
+    }
+
+    res.json({ mensagem: 'Cliente atualizada com sucesso!', cliente: result.rows[0] });
+  } catch (err) {
+    console.error("Erro ao atualizar cliente:", err);
+    res.status(500).json({ mensagem: 'Erro ao atualizar cliente.' });
+  }
+});
+
 app.delete('/api/clientes/:id', requireAuth, requireMaster, async (req, res) => {
   const id = String(req.params.id || '').trim();
   try {
@@ -247,25 +281,25 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
          atualizado_em = NOW() 
          WHERE cliente_id = $19`,
         [
-          String(usa_rimel || ''),                     // $1
-          String(problemas_tireoide || ''),            // $2
-          String(possui_diabetes || ''),               // $3
-          String(gestante || ''),                      // $4
-          String(procedimento_recente_olhos || ''),    // $5
-          String(procedimento_recente_olhos_qual || ''),// $6
-          String(possui_alergia || ''),                // $7
-          String(alergia_qual || ''),                  // $8
-          String(possui_glaucoma_ou_ocular || ''),     // $9
-          String(glaucoma_ocular_qual || ''),          // $10
-          String(esta_em_tratamento || ''),            // $11
-          String(informacoes_adicionais || ''),        // $12
-          String(mapping || ''),                       // $13
-          String(estilo || ''),                        // $14
-          String(modelo_fios || ''),                   // $15
-          String(espessura || ''),                     // $16
-          String(curvatura || ''),                     // $17
-          String(adesivo_cola || ''),                  // $18
-          clienteId                                    // $19
+          String(usa_rimel || ''),
+          String(problemas_tireoide || ''),
+          String(possui_diabetes || ''),
+          String(gestante || ''),
+          String(procedimento_recente_olhos || ''),
+          String(procedimento_recente_olhos_qual || ''),
+          String(possui_alergia || ''),
+          String(alergia_qual || ''),
+          String(possui_glaucoma_ou_ocular || ''),
+          String(glaucoma_ocular_qual || ''),
+          String(esta_em_tratamento || ''),
+          String(informacoes_adicionais || ''),
+          String(mapping || ''),
+          String(estilo || ''),
+          String(modelo_fios || ''),
+          String(espessura || ''),
+          String(curvatura || ''),
+          String(adesivo_cola || ''),
+          clienteId
         ]
       );
     } else {
@@ -278,26 +312,26 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
           informacoes_adicionais, mapping, estilo, modelo_fios, espessura, curvatura, adesivo_cola
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
         [
-          id,                                          // $1
-          clienteId,                                   // $2
-          String(usa_rimel || ''),                     // $3
-          String(problemas_tireoide || ''),            // $4
-          String(possui_diabetes || ''),               // $5
-          String(gestante || ''),                      // $6
-          String(procedimento_recente_olhos || ''),    // $7
-          String(procedimento_recente_olhos_qual || ''),// $8
-          String(possui_alergia || ''),                // $9
-          String(alergia_qual || ''),                  // $10
-          String(possui_glaucoma_ou_ocular || ''),     // $11
-          String(glaucoma_ocular_qual || ''),          // $12
-          String(esta_em_tratamento || ''),            // $13
-          String(informacoes_adicionais || ''),        // $14
-          String(mapping || ''),                       // $15
-          String(estilo || ''),                        // $16
-          String(modelo_fios || ''),                   // $17
-          String(espessura || ''),                     // $18
-          String(curvatura || ''),                     // $19
-          String(adesivo_cola || '')                   // $20
+          id,
+          clienteId,
+          String(usa_rimel || ''),
+          String(problemas_tireoide || ''),
+          String(possui_diabetes || ''),
+          String(gestante || ''),
+          String(procedimento_recente_olhos || ''),
+          String(procedimento_recente_olhos_qual || ''),
+          String(possui_alergia || ''),
+          String(alergia_qual || ''),
+          String(possui_glaucoma_ou_ocular || ''),
+          String(glaucoma_ocular_qual || ''),
+          String(esta_em_tratamento || ''),
+          String(informacoes_adicionais || ''),
+          String(mapping || ''),
+          String(estilo || ''),
+          String(modelo_fios || ''),
+          String(espessura || ''),
+          String(curvatura || ''),
+          String(adesivo_cola || '')
         ]
       );
     }
@@ -563,7 +597,7 @@ const initDb = async () => {
       );
     `);
 
-  const masterEmail = 'gabihelenacell@gmail.com';
+    const masterEmail = 'gabihelenacell@gmail.com';
     const checkMaster = await pool.query('SELECT id FROM users WHERE email = $1', [masterEmail]);
     if (checkMaster.rows.length === 0) {
       const passwordHash = await bcrypt.hash('w18187', 10);
