@@ -701,12 +701,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
               }
 
-              // 1. Mensagem para a cliente
+              // 1. Mensagem para a cliente (Variável urlWhatsAppCliente)
               const telefoneLimpoCliente = telefone.replace(/\D/g, '');
               const mensagemCliente = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
               const urlWhatsAppCliente = `https://wa.me/55${telefoneLimpoCliente.startsWith('55') ? telefoneLimpoCliente.slice(2) : telefoneLimpoCliente}?text=${encodeURIComponent(mensagemCliente)}`;
               
-              // 2. Mensagem para o número administrativo fixo (19 98745-5848)
+              // 2. Mensagem para o número administrativo fixo (Variável urlWhatsAppAdmin - 19 98745-5848)
               const numeroAdmin = '5519987455848';
               const mensagemAdmin = `[CÓPIA - LEMBRETE] Agendamento de *${apt.usuario_nome}* (${apt.servico_nome}) marcado para *${formatDateTime(apt.data_hora)}*.`;
               const urlWhatsAppAdmin = `https://wa.me/${numeroAdmin}?text=${encodeURIComponent(mensagemAdmin)}`;
@@ -789,29 +789,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   logoutButton?.addEventListener('click', () => {
     clearSession();
-    showToast('Sessão encerrada.');
-  });
-
-  const boot = async () => {
-    setAuthMode('login');
-    setActiveView('agenda');
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        currentUser = JSON.parse(saved);
-        fillAccount(currentUser);
-        updateAdminVisibility();
-        appScreen.hidden = false;
-        authScreen.hidden = true;
-        renderServices();
-        renderAppointments();
-        loadRegisteredClients();
-        return;
-      }
-    } catch (e) {}
-    authScreen.hidden = false;
-    appScreen.hidden = true;
-  };
-
-  boot();
-});
+    showToast('Sess
