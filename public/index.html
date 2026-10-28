@@ -37,7 +37,6 @@
     <main id="auth-screen" class="auth-layout">
       <section class="auth-intro">
         <div class="brand brand-light" style="font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-          <!-- Quadrado escuro para destacar as letras GH -->
           <span class="brand-mark" style="background: #3b0764; color: #ffffff; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: 800;">GH</span>
           <span>GH Lash Studio<span class="brand-period" style="color: #fef08a;">.</span></span>
         </div>
@@ -258,7 +257,6 @@
             <form id="ficha-form" style="display: flex; flex-direction: column; gap: 12px;">
               <input type="hidden" id="ficha-cliente-id" name="cliente_id">
 
-              <!-- PERGUNTAS COM SIM / NÃO -->
               <div class="question-row">
                 <span>Usa rímel?</span>
                 <div class="question-options">
@@ -368,6 +366,7 @@
           </div>
         </div>
 
+        <!-- RELATÓRIO FINANCEIRO COM BOTÃO EXPORTAR CSV -->
         <section class="view-panel admin-only" id="metricas-view" hidden>
           <div class="section-heading">
             <h2>Relatório Financeiro & Métricas</h2>
@@ -376,6 +375,7 @@
             <label style="font-size: 12px; font-weight: bold;">Data Início: <input type="date" id="filtro-inicio" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da;"></label>
             <label style="font-size: 12px; font-weight: bold;">Data Fim: <input type="date" id="filtro-fim" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da;"></label>
             <button type="button" id="filtrar-metricas" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer;">Filtrar Período</button>
+            <button type="button" id="btn-exportar-csv" class="button" style="background: #16a34a; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight: bold;">📥 Exportar CSV</button>
           </div>
           <div class="stats-row">
             <article class="stat-block"><span class="stat-label">ATENDIMENTOS CONCLUÍDOS</span><strong id="metric-total-atendimentos">0</strong></article>
