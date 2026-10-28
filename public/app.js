@@ -701,23 +701,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
               }
 
-              // 1. Mensagem para a cliente
+              // 1. Configura mensagem para a cliente
               const telefoneLimpoCliente = telefone.replace(/\D/g, '');
               const mensagemCliente = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
               const urlWhatsAppCliente = `https://wa.me/55${telefoneLimpoCliente.startsWith('55') ? telefoneLimpoCliente.slice(2) : telefoneLimpoCliente}?text=${encodeURIComponent(mensagemCliente)}`;
               
-              // 2. Mensagem para o seu número fixo administrativo (19 98745-5848)
+              // 2. Configura mensagem para o número administrativo (19 98745-5848)
               const numeroAdmin = '5519987455848';
               const mensagemAdmin = `[CÓPIA - LEMBRETE] Agendamento de *${apt.usuario_nome}* (${apt.servico_nome}) marcado para *${formatDateTime(apt.data_hora)}*.`;
               const urlWhatsAppAdmin = `https://wa.me/${numeroAdmin}?text=${encodeURIComponent(mensagemAdmin)}`;
 
-              // Abre a aba da cliente
+              // Abre a primeira aba (Cliente)
               window.open(urlWhatsAppCliente, '_blank');
 
-              // Abre a aba do número administrativo com leve atraso para evitar bloqueio de pop-up
+              // Abre a segunda aba (Admin) com 800ms de intervalo para evitar bloqueio do navegador
               setTimeout(() => {
                 window.open(urlWhatsAppAdmin, '_blank');
-              }, 400);
+              }, 800);
             });
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'concluir'));
