@@ -692,7 +692,9 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
 
+             // Evento de clique no card para abrir o WhatsApp
             row.addEventListener('click', () => {
+              // Busca a cliente cadastrada pelo nome para pegar o telefone correto
               const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
               const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
 
@@ -701,14 +703,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
               }
 
-              // 1. Mensagem para a cliente (Variável urlWhatsAppCliente)
-              const telefoneLimpoCliente = telefone.replace(/\D/g, '');
-              const mensagemCliente = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
-              const urlWhatsAppCliente = `https://wa.me/55${telefoneLimpoCliente.startsWith('55') ? telefoneLimpoCliente.slice(2) : telefoneLimpoCliente}?text=${encodeURIComponent(mensagemCliente)}`;
-
-
-              // Abre a aba da cliente
-              window.open(urlWhatsAppCliente, '_blank');
+              const telefoneLimpo = telefone.replace(/\D/g, '');
+              const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá! `;
+              const urlWhatsApp = `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}`;
+              
+              window.open(urlWhatsApp, '_blank');
             });
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', () => alterarStatusAtendimento(apt.id, 'concluir'));
