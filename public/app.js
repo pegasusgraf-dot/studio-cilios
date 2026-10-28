@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Pop-up executado especificamente ao fazer login / carregar a sessão
+  // Pop-up de lembrete de véspera executado ao logar
   const verificarLembretesVésperaNoLogin = async () => {
     try {
       const appointments = await apiFetch('/agendamentos');
@@ -653,7 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   };
 
-  // 3. Renderizador do mini-calendário lateral com dias circulados
+  // Renderizador do mini-calendário lateral com dias circulados
   const renderizarCalendarioLateral = (appointments) => {
     const container = document.getElementById('calendario-lateral');
     if (!container) return;
@@ -741,10 +741,26 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           if (emptyState) emptyState.hidden = true;
           filtered.forEach(apt => {
-            const row = document.createElement('div');
+            const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
+            const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
+            
+            const telefoneLimpo = telefone ? telefone.replace(/\D/g, '') : '';
+            const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
+            const urlWhatsApp = telefoneLimpo 
+              ? `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}` 
+              : '#';
+
+            const row = document.createElement('a');
+            row.href = telefoneLimpo ? urlWhatsApp : '#';
+            row.target = '_blank';
             row.className = 'appointment-item';
             row.style.cursor = 'pointer';
-            row.title = 'Clique para enviar mensagem no WhatsApp da cliente';
+            row.style.textDecoration = 'none';
+            row.style.color = 'inherit';
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+            row.title = telefone ? 'Clique para enviar mensagem no WhatsApp da cliente' : 'Cliente sem telefone cadastrado';
 
             const isMaster = currentUser?.tipo === 'master';
             const status = apt.status || 'pendente';
@@ -761,7 +777,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   Status: ${status.toUpperCase()}
                 </div>
               </div>
-              <div style="display: flex; gap: 6px; align-items: center;" onclick="event.stopPropagation()">
+              <div style="display: flex; gap: 6px; align-items: center;" onclick="event.preventDefault(); event.stopPropagation();">
                 <div class="value-badge">${formatCurrency(apt.valor)}</div>
                 ${isMaster && status === 'pendente' ? `
                   <button class="button" data-action="concluir" data-id="${apt.id}" style="background:#16a34a; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Concluir</button>
@@ -770,37 +786,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${isMaster ? `<button class="button button-danger" data-action="excluir" data-id="${apt.id}" style="background:#64748b; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Excluir</button>` : ''}
               </div>
             `;
-// WhatsApp abre uma única vez de forma limpa e controlada
-            row.onclick = (e) => {
-              e.stopPropagation();
-              const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
-              const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
 
+            row.addEventListener('click', (e) => {
               if (!telefone) {
+                e.preventDefault();
                 showToast(`Cliente "${apt.usuario_nome}" não possui telefone cadastrado na ficha.`, true);
-                return;
               }
-
-              const telefoneLimpo = telefone.replace(/\D/g, '');
-              const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
-              const urlWhatsApp = `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}`;
-              
-              // Utiliza atribuição direta na localização atual ou window.open controlado por flag de segurança
-              const novaAba = window.open(urlWhatsApp, '_blank');
-              if (novaAba) {
-                novaAba.focus();
-              }
-            };
+            });
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', (e) => {
+              e.preventDefault();
               e.stopPropagation();
               alterarStatusAtendimento(apt.id, 'concluir');
             });
             row.querySelector('[data-action="cancelar"]')?.addEventListener('click', (e) => {
+              e.preventDefault();
               e.stopPropagation();
               alterarStatusAtendimento(apt.id, 'cancelar');
             });
             row.querySelector('[data-action="excluir"]')?.addEventListener('click', (e) => {
+              e.preventDefault();
               e.stopPropagation();
               excluirAgendamento(apt.id);
             });
@@ -888,7 +893,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAppointments();
         loadRegisteredClients();
         
-        // Verifica o lembrete se a sessão já estiver salva ao recarregar a página
         verificarLembretesVésperaNoLogin();
         return;
       }
