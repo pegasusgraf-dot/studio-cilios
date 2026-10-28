@@ -273,6 +273,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderServices();
     renderAppointments();
     loadRegisteredClients();
+    
+    // Dispara o pop-up de aviso de agendamento do dia seguinte logo após logar
+    verificarLembretesVésperaNoLogin();
   };
 
   const clearSession = () => {
@@ -624,27 +627,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // 1. Verificador de lembrete de 1 dia antes (Popup)
-  const verificarLembretesVéspera = (appointments) => {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+  // Pop-up executado especificamente ao fazer login / carregar a sessão
+  const verificarLembretesVésperaNoLogin = async () => {
+    try {
+      const appointments = await apiFetch('/agendamentos');
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
 
-    appointments.forEach(apt => {
-      if ((apt.status || 'pendente') !== 'pendente') return;
-      const dataApt = new Date(apt.data_hora);
-      dataApt.setHours(0, 0, 0, 0);
+      appointments.forEach(apt => {
+        if ((apt.status || 'pendente') !== 'pendente') return;
+        const dataApt = new Date(apt.data_hora);
+        dataApt.setHours(0, 0, 0, 0);
 
-      const diffTime = dataApt - hoje;
-      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        const diffTime = dataApt - hoje;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 1) {
-        const chaveAviso = `aviso_amanha_${apt.id}`;
-        if (!sessionStorage.getItem(chaveAviso)) {
-          alert(`⚠️ Lembrete de Reserva:\nAmanhã (${formatDateTime(apt.data_hora)}) você tem atendimento agendado com ${apt.usuario_nome} (${apt.servico_nome})!`);
-          sessionStorage.setItem(chaveAviso, 'true');
+        if (diffDays === 1) {
+          const chaveAviso = `aviso_login_amanha_${apt.id}`;
+          if (!sessionStorage.getItem(chaveAviso)) {
+            alert(`⚠️ Lembrete de Reserva:\nAmanhã (${formatDateTime(apt.data_hora)}) você tem atendimento agendado com ${apt.usuario_nome} (${apt.servico_nome})!`);
+            sessionStorage.setItem(chaveAviso, 'true');
+          }
         }
-      }
-    });
+      });
+    } catch (e) {}
   };
 
   // 3. Renderizador do mini-calendário lateral com dias circulados
@@ -708,7 +714,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const appointments = await apiFetch('/agendamentos');
       
-      verificarLembretesVéspera(appointments);
       renderizarCalendarioLateral(appointments);
 
       const filterVal = appointmentFilter ? appointmentFilter.value : 'todos';
@@ -766,8 +771,8 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
 
-            // WhatsApp abre uma única vez de forma limpa ao clicar no card
-            row.onclick = (e) => {
+            // WhatsApp abre uma única vez ao clicar explicitamente no card
+            row.addEventListener('click', (e) => {
               e.stopPropagation();
               const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
               const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
@@ -782,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const urlWhatsApp = `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}`;
               
               window.open(urlWhatsApp, '_blank');
-            };
+            });
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', (e) => {
               e.stopPropagation();
@@ -879,6 +884,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderServices();
         renderAppointments();
         loadRegisteredClients();
+        
+        // Verifica o lembrete se a sessão já estiver salva ao recarregar a página
+        verificarLembretesVésperaNoLogin();
         return;
       }
     } catch (e) {}
