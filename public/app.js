@@ -770,9 +770,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${isMaster ? `<button class="button button-danger" data-action="excluir" data-id="${apt.id}" style="background:#64748b; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Excluir</button>` : ''}
               </div>
             `;
-
-            // WhatsApp abre uma única vez ao clicar explicitamente no card
-            row.addEventListener('click', (e) => {
+// WhatsApp abre uma única vez de forma limpa e controlada
+            row.onclick = (e) => {
               e.stopPropagation();
               const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
               const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
@@ -786,8 +785,12 @@ document.addEventListener('DOMContentLoaded', () => {
               const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
               const urlWhatsApp = `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}`;
               
-              window.open(urlWhatsApp, '_blank');
-            });
+              // Utiliza atribuição direta na localização atual ou window.open controlado por flag de segurança
+              const novaAba = window.open(urlWhatsApp, '_blank');
+              if (novaAba) {
+                novaAba.focus();
+              }
+            };
 
             row.querySelector('[data-action="concluir"]')?.addEventListener('click', (e) => {
               e.stopPropagation();
