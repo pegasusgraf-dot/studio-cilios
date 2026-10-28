@@ -23,7 +23,6 @@
       .question-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; background: #f8fafc; padding: 8px 12px; border-radius: 6px; }
       .question-options { display: flex; gap: 15px; align-items: center; font-weight: normal; }
 
-      /* Estilo correto para a impressão da ficha */
       @media print {
         body * { visibility: hidden; }
         #ficha-modal, #ficha-modal * { visibility: visible; }
@@ -202,14 +201,16 @@
           </div>
         </section>
 
+        <!-- CADASTRO E EDIÇÃO DE CLIENTES -->
         <section class="view-panel admin-only" id="clientes-view" hidden>
           <div class="section-heading">
             <h2>Gerenciamento & Ficha de Clientes</h2>
           </div>
           <div class="management-grid">
             <section class="management-panel card">
-              <h3>Cadastrar Nova Cliente</h3>
+              <h3 id="client-form-title">Cadastrar Nova Cliente</h3>
               <form id="client-form" class="form-stack compact-form" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                <input type="hidden" name="id" id="client-id" value="">
                 <label class="field">Nome completo
                   <input type="text" name="nome" required placeholder="Nome da cliente" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
                 </label>
@@ -231,7 +232,10 @@
                 <label class="field">CPF
                   <input type="text" name="cpf" placeholder="000.000.000-00" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
                 </label>
-                <button type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; margin-top: 5px;">Cadastrar Cliente</button>
+                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                  <button type="submit" id="client-submit-btn" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer; flex: 1;">Cadastrar Cliente</button>
+                  <button type="button" id="client-cancel-btn" class="button button-secondary" hidden style="background: #64748b; color:white; border:none; padding:10px; border-radius:6px; cursor:pointer;">Cancelar</button>
+                </div>
               </form>
             </section>
             <section class="management-panel card">
@@ -366,7 +370,7 @@
           </div>
         </div>
 
-        <!-- RELATÓRIO FINANCEIRO COM BOTÃO EXPORTAR CSV -->
+        <!-- RELATÓRIO FINANCEIRO & ATENDIMENTOS CONCLUÍDOS -->
         <section class="view-panel admin-only" id="metricas-view" hidden>
           <div class="section-heading">
             <h2>Relatório Financeiro & Métricas</h2>
@@ -377,10 +381,19 @@
             <button type="button" id="filtrar-metricas" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer;">Filtrar Período</button>
             <button type="button" id="btn-exportar-csv" class="button" style="background: #16a34a; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight: bold;">📥 Exportar CSV</button>
           </div>
-          <div class="stats-row">
+          
+          <div class="stats-row" style="margin-bottom: 20px;">
             <article class="stat-block"><span class="stat-label">ATENDIMENTOS CONCLUÍDOS</span><strong id="metric-total-atendimentos">0</strong></article>
             <article class="stat-block"><span class="stat-label">FATURAMENTO TOTAL</span><strong id="metric-faturamento">R$ 0,00</strong></article>
             <article class="stat-block"><span class="stat-label">MÉDIA POR ATENDIMENTO</span><strong id="metric-media">R$ 0,00</strong></article>
+          </div>
+
+          <!-- LISTA DETALHADA DOS ATENDIMENTOS CONCLUÍDOS -->
+          <div class="card" style="padding: 20px;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #3b0764;">Atendimentos Concluídos no Período</h3>
+            <div id="lista-atendimentos-concluidos" class="items-list" style="display: flex; flex-direction: column; gap: 10px;">
+              <p class="muted">Carregando atendimentos...</p>
+            </div>
           </div>
         </section>
 
