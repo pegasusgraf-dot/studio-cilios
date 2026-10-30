@@ -22,7 +22,7 @@
       .modal-card { background: white; width: 100%; max-width: 600px; border-radius: 8px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
       .question-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; background: #f8fafc; padding: 8px 12px; border-radius: 6px; }
       .question-options { display: flex; gap: 15px; align-items: center; font-weight: normal; }
-      
+
       /* Badge para destacar o número do dia */
       .day-badge {
         display: inline-flex;
@@ -179,12 +179,14 @@
             <section class="reservations-panel card">
               <div class="filter-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
                 <h3>Horários Marcados</h3>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                  <label class="filter-label" style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: bold; color: #333;">
-                    Data:
-                    <input type="date" id="appointment-date-filter" style="padding: 6px; border: 1px solid #ced4da; border-radius: 6px;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <label class="filter-label" style="display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: bold; color: #333;">
+                    De: <input type="date" id="appointment-date-start" style="padding: 5px; border: 1px solid #ced4da; border-radius: 6px;">
                   </label>
-                  <button type="button" id="clear-date-filter" class="button" style="background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;" title="Mostrar a partir de hoje">Limpar Data</button>
+                  <label class="filter-label" style="display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: bold; color: #333;">
+                    Até: <input type="date" id="appointment-date-end" style="padding: 5px; border: 1px solid #ced4da; border-radius: 6px;">
+                  </label>
+                  <button type="button" id="clear-date-filter" class="button" style="background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;" title="Limpar período">Limpar</button>
                   <label class="filter-label">
                     <select id="appointment-filter" style="padding: 6px; border: 1px solid #ced4da; border-radius: 6px;">
                       <option value="todos">Todos os serviços</option>
@@ -337,102 +339,4 @@
                 <span>Possui alergia?</span>
                 <div class="question-options">
                   <label><input type="radio" name="possui_alergia" value="sim"> Sim</label>
-                  <label><input type="radio" name="possui_alergia" value="nao"> Não</label>
-                </div>
-              </div>
-              <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, qual alergia?
-                <input type="text" name="alergia_qual" placeholder="Especifique a alergia" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-              </label>
-
-              <div class="question-row">
-                <span>Possui glaucoma ou algum problema ocular?</span>
-                <div class="question-options">
-                  <label><input type="radio" name="possui_glaucoma_ou_ocular" value="sim"> Sim</label>
-                  <label><input type="radio" name="possui_glaucoma_ou_ocular" value="nao"> Não</label>
-                </div>
-              </div>
-              <label class="field" style="font-size: 12px; font-weight: bold;">Se sim, explique:
-                <input type="text" name="glaucoma_ocular_qual" placeholder="Explique o problema ocular" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-              </label>
-
-              <div class="question-row">
-                <span>Está em tratamento médico atualmente?</span>
-                <div class="question-options">
-                  <label><input type="radio" name="esta_em_tratamento" value="sim"> Sim</label>
-                  <label><input type="radio" name="esta_em_tratamento" value="nao"> Não</label>
-                </div>
-              </div>
-
-              <label class="field" style="font-size: 12px; font-weight: bold;">Existe algum procedimento que julgue ser necessário informar ao profissional antes do procedimento?
-                <textarea name="informacoes_adicionais" rows="2" placeholder="Observações importantes" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;"></textarea>
-              </label>
-
-              <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
-              <h4 style="margin: 0; font-size: 14px; color: #a855f7;">Detalhes dos Procedimentos de Cílios</h4>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <label class="field" style="font-size: 12px; font-weight: bold;">Mapping:
-                  <input type="text" name="mapping" placeholder="Ex: Cat Eye, Doll..." style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-                </label>
-                <label class="field" style="font-size: 12px; font-weight: bold;">Estilo:
-                  <input type="text" name="estilo" placeholder="Ex: Volume Russo" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-                </label>
-                <label class="field" style="font-size: 12px; font-weight: bold;">Modelos dos fios:
-                  <input type="text" name="modelo_fios" placeholder="Ex: Y, W, Ellipse" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-                </label>
-                <label class="field" style="font-size: 12px; font-weight: bold;">Espessura:
-                  <input type="text" name="espessura" placeholder="Ex: 0.07" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-                </label>
-                <label class="field" style="font-size: 12px; font-weight: bold;">Curvatura:
-                  <input type="text" name="curvatura" placeholder="Ex: C, CC, D" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-                </label>
-                <label class="field" style="font-size: 12px; font-weight: bold;">Adesivo ou Cola:
-                  <input type="text" name="adesivo_cola" placeholder="Ex: Master Exotik" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-top:4px;">
-                </label>
-              </div>
-
-              <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-                <button type="button" id="btn-imprimir-ficha" class="button" style="background: #3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight: bold;">🖨️ Imprimir Ficha</button>
-                <button type="submit" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight: bold;">Salvar Ficha</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- RELATÓRIO FINANCEIRO & ATENDIMENTOS CONCLUÍDOS -->
-        <section class="view-panel admin-only" id="metricas-view" hidden>
-          <div class="section-heading">
-            <h2>Relatório Financeiro & Métricas</h2>
-          </div>
-          <div class="card" style="padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-            <label style="font-size: 12px; font-weight: bold;">Data Início: <input type="date" id="filtro-inicio" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da;"></label>
-            <label style="font-size: 12px; font-weight: bold;">Data Fim: <input type="date" id="filtro-fim" style="padding: 8px; border-radius: 6px; border: 1px solid #ced4da;"></label>
-            <button type="button" id="filtrar-metricas" class="button button-primary" style="background: #a855f7; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer;">Filtrar Período</button>
-            <button type="button" id="btn-exportar-csv" class="button" style="background: #16a34a; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight: bold;">📥 Exportar CSV</button>
-          </div>
-          
-          <div class="stats-row" style="margin-bottom: 20px;">
-            <article class="stat-block"><span class="stat-label">ATENDIMENTOS CONCLUÍDOS</span><strong id="metric-total-atendimentos">0</strong></article>
-            <article class="stat-block"><span class="stat-label">FATURAMENTO TOTAL</span><strong id="metric-faturamento">R$ 0,00</strong></article>
-            <article class="stat-block"><span class="stat-label">MÉDIA POR ATENDIMENTO</span><strong id="metric-media">R$ 0,00</strong></article>
-          </div>
-
-          <div class="card" style="padding: 20px;">
-            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #3b0764;">Atendimentos Concluídos no Período</h3>
-            <div id="lista-atendimentos-concluidos" class="items-list" style="display: flex; flex-direction: column; gap: 10px;">
-              <p class="muted">Carregando atendimentos...</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="view-panel" id="cracha-view" hidden>
-          <div class="cracha-card"><div id="qrcode"></div><p style="font-size: 11px; margin-top: 8px;">Crachá Digital</p></div>
-        </section>
-        <div class="toast" id="toast" role="status"></div>
-      </main>
-    </div>
-    <script>
-      new QRCode(document.getElementById("qrcode"), { text: window.location.origin + "/perfil.html?id=gh-lash-cliente", width: 96, height: 96 });
-    </script>
-  </body>
-</html>
+                  <label><input type="radio" name="possui_
