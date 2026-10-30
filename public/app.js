@@ -736,4 +736,228 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const appointments = await apiFetch('/agendamentos');
       
-      renderizar
+      renderizarCalendarioLateral(appointments);
+
+      const filterVal = appointmentFilter ? appointmentFilter.value : 'todos';
+
+      let filtered = appointments.filter(a => {
+        // Filtro por serviço
+        if (filterVal !== 'todos' && String(a.servico_id) !== filterVal) {
+          return false;
+        }
+
+        const appDateStr = a.data_hora ? a.data_hora.split('T')[0] : '';
+
+        // Filtro de período (De / Até) ou ocultar passado por padrão
+        if (startDate || endDate) {
+          if (startDate && appDateStr < startDate) return false;
+          if (endDate && appDateStr > endDate) return false;
+        } else {
+          // PADRÃO: Se o usuário não preencheu o período, mostra apenas a partir de hoje
+          if (appDateStr < todayStr) return false;
+        }
+
+        return true;
+      });
+
+      if (statMine) statMine.textContent = String(filtered.length || 0);
+
+      const next = [...appointments]
+        .filter(a => (a.status || 'pendente') === 'pendente' && new Date(a.data_hora).getTime() > Date.now())
+        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
+
+      if (next) {
+        if (statNext) statNext.textContent = formatDateTime(next.data_hora);
+        if (statNextDetail) statNextDetail.textContent = `${next.servico_nome} (${next.usuario_nome})`;
+      } else {
+        if (statNext) statNext.textContent = '—';
+        if (statNextDetail) statNextDetail.textContent = 'Nenhum agendamento futuro';
+      }
+
+      if (listEl) {
+        listEl.innerHTML = '';
+        if (!filtered.length) {
+          if (emptyState) emptyState.hidden = false;
+          listEl.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
+        } else {
+          if (emptyState) emptyState.hidden = true;
+          filtered.forEach(apt => {
+            const dateObj = new Date(apt.data_hora);
+            const dayNumber = String(dateObj.getDate()).padStart(2, '0'); // Extrai o número do dia em destaque
+
+            const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
+            const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
+            
+            const telefoneLimpo = telefone ? telefone.replace(/\D/g, '') : '';
+            const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
+            const urlWhatsApp = telefoneLimpo 
+              ? `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}` 
+              : '#';
+
+            const row = document.createElement('a');
+            row.href = telefoneLimpo ? urlWhatsApp : '#';
+            row.target = '_blank';
+            row.className = 'appointment-item';
+            row.style.cursor = 'pointer';
+            row.style.textDecoration = 'none';
+            row.style.color = 'inherit';
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+            row.title = telefone ? 'Clique para enviar mensagem no WhatsApp da cliente' : 'Cliente sem telefone cadastrado';
+
+            const isMaster = currentUser?.tipo === 'master';
+            const status = apt.status || 'pendente';
+
+            let statusCor = '#d97706';
+            if (status === 'concluido') statusCor = '#16a34a';
+            if (status === 'cancelado') statusCor = '#dc3545';
+
+            row.innerHTML = `
+              <div style="display: flex; align-items: center;">
+                <span class="day-badge">${dayNumber}</span>
+                <div>
+                  <strong>${apt.servico_nome} 💬</strong>
+                  <div class="muted">Cliente: <strong>${apt.usuario_nome}</strong> • ${formatDateTime(apt.data_hora)}</div>
+                  <div style="font-size: 11px; margin-top: 4px; color: ${statusCor}; font-weight: bold;">
+                    Status: ${status.toUpperCase()}
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;" onclick="event.preventDefault(); event.stopPropagation();">
+                <div class="value-badge">${formatCurrency(apt.valor)}</div>
+                ${isMaster && status === 'pendente' ? `
+                  <button class="button" data-action="concluir" data-id="${apt.id}" style="background:#16a34a; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Concluir</button>
+                  <button class="button" data-action="cancelar" data-id="${apt.id}" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Não veio</button>
+                ` : ''}
+                ${isMaster ? `<button class="button button-danger" data-action="excluir" data-id="${apt.id}" style="background:#64748b; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Excluir</button>` : ''}
+              </div>
+            `;
+
+            row.addEventListener('click', (e) => {
+              if (!telefone) {
+                e.preventDefault();
+                showToast(`Cliente "${apt.usuario_nome}" não possui telefone cadastrado na ficha.`, true);
+              }
+            });
+
+            row.querySelector('[data-action="concluir"]')?.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              alterarStatusAtendimento(apt.id, 'concluir');
+            });
+            row.querySelector('[data-action="cancelar"]')?.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              alterarStatusAtendimento(apt.id, 'cancelar');
+            });
+            row.querySelector('[data-action="excluir"]')?.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              excluirAgendamento(apt.id);
+            });
+
+            listEl.appendChild(row);
+          });
+        }
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  // Event Listeners para acionar a filtragem de data automaticamente
+  document.getElementById('appointment-date-start')?.addEventListener('change', renderAppointments);
+  document.getElementById('appointment-date-end')?.addEventListener('change', renderAppointments);
+  
+  document.getElementById('clear-date-filter')?.addEventListener('click', () => {
+    const startInput = document.getElementById('appointment-date-start');
+    const endInput = document.getElementById('appointment-date-end');
+    if (startInput) startInput.value = '';
+    if (endInput) endInput.value = '';
+    renderAppointments();
+  });
+
+  document.querySelectorAll('[data-auth-mode]').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
+
+  navButtons.forEach(btn => btn.addEventListener('click', () => {
+    if ((btn.dataset.view === 'cadastros' || btn.dataset.view === 'metricas' || btn.dataset.view === 'clientes') && currentUser?.tipo !== 'master') {
+      showToast('Acesso restrito ao master.', true);
+      return;
+    }
+    setActiveView(btn.dataset.view);
+  }));
+
+  appointmentFilter?.addEventListener('change', renderAppointments);
+
+  authForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(authForm);
+    const nome = formData.get('nome');
+    const email = formData.get('email');
+    const senha = formData.get('senha');
+
+    try {
+      if (authMode === 'register') {
+        await apiFetch('/cadastro', { method: 'POST', body: JSON.stringify({ nome, email, senha }) });
+        setMessage(authMessage, 'Cadastrado com sucesso! Faça login.', false);
+        setAuthMode('login');
+        return;
+      }
+      const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
+      saveSession(res.usuario);
+      showToast(`Bem-vinda, ${res.usuario.nome}!`);
+    } catch (err) {
+      setMessage(authMessage, err.message, true);
+    }
+  });
+
+  appointmentForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(appointmentForm);
+    try {
+      await apiFetch('/agendamentos', {
+        method: 'POST',
+        body: JSON.stringify({
+          servico_id: formData.get('servico_id'),
+          data_hora: formData.get('data_hora'),
+          usuario_nome: formData.get('usuario_nome')
+        })
+      });
+      appointmentForm.reset();
+      if (currentUser?.tipo !== 'master' && inputUsuarioNome) inputUsuarioNome.value = currentUser.nome;
+      showToast('Agendamento criado com sucesso!');
+      renderAppointments();
+      renderMasterMetrics();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+
+  logoutButton?.addEventListener('click', () => {
+    clearSession();
+    showToast('Sessão encerrada.');
+  });
+
+  const boot = async () => {
+    setAuthMode('login');
+    setActiveView('agenda');
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        currentUser = JSON.parse(saved);
+        fillAccount(currentUser);
+        updateAdminVisibility();
+        appScreen.hidden = false;
+        authScreen.hidden = true;
+        renderServices();
+        renderAppointments();
+        loadRegisteredClients();
+        verificarLembretesVésperaNoLogin();
+        return;
+      }
+    } catch (e) {}
+    authScreen.hidden = false;
+    appScreen.hidden = true;
+  };
+
+  boot();
+});
