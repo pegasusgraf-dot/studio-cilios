@@ -241,29 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Botão de Impressão do Crachá
   document.getElementById('btn-imprimir-cracha-selecionado')?.addEventListener('click', () => {
-    if (!selectClienteCracha.value) {
+    if (!selectClienteCracha || !selectClienteCracha.value) {
       showToast('Selecione uma cliente para imprimir o crachá.', true);
       return;
     }
     window.print();
-  });
-
-  // Upload e pré-visualização do Logotipo no Crachá
-  document.getElementById('input-logo-cracha')?.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(uploadEvent) {
-        const previewLogo = document.getElementById('preview-logo-cracha');
-        if (previewLogo) {
-          previewLogo.src = uploadEvent.target.result;
-          previewLogo.hidden = false;
-        }
-      };
-      reader.readAsDataURL(file);
-    }
   });
 
   const setActiveView = (viewName) => {
@@ -592,6 +575,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setRadio('gestante', ficha.gestante);
         setRadio('procedimento_recente_olhos', ficha.procedimento_recente_olhos);
         setRadio('possui_alergia', ficha.possui_alergia);
+        setRadio('sensibilidade_olhos', ficha.sensibilidade_olhos);
+        setRadio('usa_lentes_contato', ficha.usa_lentes_contato);
+        setRadio('dorme_brucos', ficha.dorme_brucos);
+        setRadio('fez_extensao_antes', ficha.fez_extensao_antes);
 
         if (fichaForm.procedimento_recente_olhos_qual) fichaForm.procedimento_recente_olhos_qual.value = ficha.procedimento_recente_olhos_qual || '';
         if (fichaForm.possui_alergia_qual) fichaForm.possui_alergia_qual.value = ficha.possui_alergia_qual || '';
@@ -642,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
       possui_alergia_qual: formData.get('possui_alergia_qual') || '',
       sensibilidade_olhos: getRadioVal('sensibilidade_olhos'),
       usa_lentes_contato: getRadioVal('usa_lentes_contato'),
-      dorme_brucos_lado: getRadioVal('dorme_brucos_lado'),
+      dorme_brucos: getRadioVal('dorme_brucos'),
       fez_extensao_antes: getRadioVal('fez_extensao_antes'),
       observacoes: formData.get('observacoes') || ''
     };
@@ -951,7 +938,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setAuthMode('login');
         return;
       }
-      const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
+      const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) => {} });
       saveSession(res.usuario);
       showToast(`Bem-vinda, ${res.usuario.nome}!`);
     } catch (err) {
