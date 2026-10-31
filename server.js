@@ -79,11 +79,16 @@ app.post('/api/logout', (req, res) => {
   res.json({ mensagem: 'Sessão encerrada.' });
 });
 
-// CADASTRO AUTOMÁTICO: Cria Usuário + Cliente + Ficha Inicial
+// CADASTRO COM FICHA PREENCHIDA
 app.post('/api/cadastro', async (req, res) => {
   const nome = String(req.body.nome || '').trim();
   const email = String(req.body.email || '').trim().toLowerCase();
   const senha = String(req.body.senha || '').trim();
+  const telefone = String(req.body.telefone || '').trim();
+  const cpf = String(req.body.cpf || '').trim();
+  const data_nascimento = String(req.body.data_nascimento || '').trim();
+  const profissao = String(req.body.profissao || '').trim();
+  const endereco = String(req.body.endereco || '').trim();
 
   if (!nome || !email || senha.length < 6) {
     return res.status(400).json({ mensagem: 'Informe nome, e-mail e senha com pelo menos 6 caracteres.' });
@@ -99,20 +104,20 @@ app.post('/api/cadastro', async (req, res) => {
     const senhaHash = await bcrypt.hash(senha, 10);
     const tipo = 'cliente';
 
-    // 1. Cria o usuário na tabela de autenticação
+    // 1. Cria usuário
     await pool.query(
       'INSERT INTO users (id, nome, email, senha, tipo) VALUES ($1, $2, $3, $4, $5)',
       [userId, nome, email, senhaHash, tipo]
     );
 
-    // 2. Insere automaticamente na tabela de clientes
+    // 2. Cria cliente com os dados adicionais preenchidos
     const clientId = makeId('cli');
     await pool.query(
-      'INSERT INTO clients (id, nome, email) VALUES ($1, $2, $3)',
-      [clientId, nome, email]
+      'INSERT INTO clients (id, nome, email, telefone, cpf, data_nascimento, profissao, endereco) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [clientId, nome, email, telefone, cpf, data_nascimento, profissao, endereco]
     );
 
-    // 3. Cria automaticamente uma ficha em branco vinculada à nova cliente
+    // 3. Cria a ficha com as respostas do questionário enviadas no cadastro
     const fichaId = makeId('fich');
     await pool.query(
       `INSERT INTO client_fichas (
@@ -124,7 +129,19 @@ app.post('/api/cadastro', async (req, res) => {
       [
         fichaId,
         clientId,
-        'nao', 'nao', 'nao', 'nao', 'nao', '', 'nao', '', 'nao', 'nao', 'nao', 'nao', 'Cadastrada via aplicativo.'
+        String(req.body.usa_rimel || 'nao'),
+        String(req.body.problemas_tireoide || 'nao'),
+        String(req.body.possui_diabetes || 'nao'),
+        String(req.body.gestante || 'nao'),
+        String(req.body.procedimento_recente_olhos || 'nao'),
+        String(req.body.procedimento_recente_olhos_qual || ''),
+        String(req.body.possui_alergia || 'nao'),
+        String(req.body.alergia_qual || ''),
+        String(req.body.sensibilidade_olhos || 'nao'),
+        String(req.body.usa_lentes_contato || 'nao'),
+        String(req.body.dorme_brucos_lado || 'nao'),
+        String(req.body.fez_extensao_antes || 'nao'),
+        String(req.body.observacoes || 'Preenchido no cadastro inicial.')
       ]
     );
 
