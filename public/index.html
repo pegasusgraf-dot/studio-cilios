@@ -276,14 +276,15 @@
           </div>
         </section>
 
-        <!-- RELATÓRIO FINANCEIRO COM FILTRO DE DATAS -->
+        <!-- RELATÓRIO FINANCEIRO / MÉTRICAS CORRIGIDO -->
         <section class="view-panel admin-only" id="metricas-view" hidden>
           <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
             <h2>Relatório Financeiro & Atendimentos Concluídos</h2>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <label style="font-size: 11px; font-weight: bold; color: #333;">De: <input type="date" id="metricas-date-start" style="padding: 5px; border: 1px solid #ced4da; border-radius: 6px;"></label>
-              <label style="font-size: 11px; font-weight: bold; color: #333;">Até: <input type="date" id="metricas-date-end" style="padding: 5px; border: 1px solid #ced4da; border-radius: 6px;"></label>
-              <button type="button" id="metricas-clear-date" style="background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">Limpar</button>
+              <label style="font-size: 11px; font-weight: bold; color: #333;">De: <input type="date" id="filtro-inicio" style="padding: 5px; border: 1px solid #ced4da; border-radius: 6px;"></label>
+              <label style="font-size: 11px; font-weight: bold; color: #333;">Até: <input type="date" id="filtro-fim" style="padding: 5px; border: 1px solid #ced4da; border-radius: 6px;"></label>
+              <button type="button" id="filtrar-metricas" style="background: #a855f7; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Filtrar</button>
+              <button type="button" id="btn-exportar-csv" style="background: #16a34a; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Exportar CSV</button>
             </div>
           </div>
           
@@ -291,20 +292,24 @@
             <section class="management-panel card" style="grid-column: span 2;">
               <h3>Resumo do Período</h3>
               <div style="margin-top: 15px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-                <div style="background: #f3e8ff; padding: 15px 20px; border-radius: 8px; border: 1px solid #d8b4fe;">
-                  <span style="font-size: 12px; font-weight: bold; color: #7e22ce; display: block;">TOTAL FATURADO</span>
-                  <strong id="metricas-total-valor" style="font-size: 24px; color: #3b0764;">R$ 0,00</strong>
+                <div style="background: #f3e8ff; padding: 15px 20px; border-radius: 8px; border: 1px solid #d8b4fe; min-width: 150px;">
+                  <span style="font-size: 12px; font-weight: bold; color: #7e22ce; display: block;">FATURAMENTO TOTAL</span>
+                  <strong id="metric-faturamento" style="font-size: 22px; color: #3b0764;">R$ 0,00</strong>
                 </div>
-                <div style="background: #f8fafc; padding: 15px 20px; border-radius: 8px; border: 1px solid #e2e8f0; flex: 1;">
+                <div style="background: #f8fafc; padding: 15px 20px; border-radius: 8px; border: 1px solid #e2e8f0; min-width: 150px;">
                   <span style="font-size: 12px; font-weight: bold; color: #64748b; display: block;">ATENDIMENTOS CONCLUÍDOS</span>
-                  <strong id="metricas-total-qtd" style="font-size: 24px; color: #334155;">0</strong>
+                  <strong id="metric-total-atendimentos" style="font-size: 22px; color: #334155;">0</strong>
+                </div>
+                <div style="background: #f8fafc; padding: 15px 20px; border-radius: 8px; border: 1px solid #e2e8f0; min-width: 150px; flex: 1;">
+                  <span style="font-size: 12px; font-weight: bold; color: #64748b; display: block;">MÉDIA POR ATENDIMENTO</span>
+                  <strong id="metric-media" style="font-size: 22px; color: #334155;">R$ 0,00</strong>
                 </div>
               </div>
 
               <div style="margin-top: 25px;">
                 <h4 style="margin-bottom: 10px; font-size: 15px; color: #1e293b;">Atendimentos Realizados</h4>
-                <div id="metricas-lista-concluidos" class="items-list" style="max-height: 400px; overflow-y: auto;">
-                  <!-- Listagem gerada pelo JavaScript -->
+                <div id="lista-atendimentos-concluidos" class="items-list" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Os itens detalhados preenchidos pelo seu app.js aparecerão aqui -->
                 </div>
               </div>
             </section>
