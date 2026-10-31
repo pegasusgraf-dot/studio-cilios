@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
       possui_alergia_qual: formData.get('possui_alergia_qual') || '',
       sensibilidade_olhos: getRadioVal('sensibilidade_olhos'),
       usa_lentes_contato: getRadioVal('usa_lentes_contato'),
-      dorme_brucos: getRadioVal('dorme_brucos'),
+      dorme_brucos_lado: getRadioVal('dorme_brucos_lado'), // Alinhado com o index.html
       fez_extensao_antes: getRadioVal('fez_extensao_antes'),
       observacoes: formData.get('observacoes') || ''
     };
