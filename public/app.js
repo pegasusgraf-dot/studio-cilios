@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setRadio('possui_alergia', ficha.possui_alergia);
         setRadio('sensibilidade_olhos', ficha.sensibilidade_olhos);
         setRadio('usa_lentes_contato', ficha.usa_lentes_contato);
-        setRadio('dorme_brucos', ficha.dorme_brucos);
+        setRadio('dorme_brucos_lado', ficha.dorme_brucos_lado);
         setRadio('fez_extensao_antes', ficha.fez_extensao_antes);
 
         if (fichaForm.procedimento_recente_olhos_qual) fichaForm.procedimento_recente_olhos_qual.value = ficha.procedimento_recente_olhos_qual || '';
@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
       possui_alergia_qual: formData.get('possui_alergia_qual') || '',
       sensibilidade_olhos: getRadioVal('sensibilidade_olhos'),
       usa_lentes_contato: getRadioVal('usa_lentes_contato'),
-      dorme_brucos_lado: getRadioVal('dorme_brucos_lado'), // Alinhado com o index.html
+      dorme_brucos_lado: getRadioVal('dorme_brucos_lado'),
       fez_extensao_antes: getRadioVal('fez_extensao_antes'),
       observacoes: formData.get('observacoes') || ''
     };
