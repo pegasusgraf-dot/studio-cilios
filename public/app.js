@@ -494,22 +494,34 @@ document.addEventListener('DOMContentLoaded', () => {
     fichaClienteId.value = cliente.id;
     fichaForm.reset();
 
-    // Preenche o Cartão de Identificação no topo da ficha
+    // Preenche o Cartão Digital na tela
     document.getElementById('cartao-nome').textContent = cliente.nome;
     document.getElementById('cartao-tel').textContent = cliente.telefone || '—';
     document.getElementById('cartao-cpf').textContent = cliente.cpf || '—';
     document.getElementById('cartao-nasc').textContent = cliente.data_nascimento || '—';
 
-    // Gera o QR Code no Cartão da Cliente
+    // Preenche os dados para Impressão Frente e Verso
+    document.getElementById('print-cartao-nome').textContent = cliente.nome;
+    document.getElementById('print-cartao-tel').textContent = cliente.telefone || '—';
+    document.getElementById('print-cartao-cpf').textContent = cliente.cpf || '—';
+    document.getElementById('print-cartao-nasc').textContent = cliente.data_nascimento || '—';
+
     const qrContainer = document.getElementById('qrcode-ficha');
+    const qrPrintContainer = document.getElementById('print-qrcode-ficha');
+    
+    const qrText = `Cliente: ${cliente.nome} | Tel: ${cliente.telefone || ''} | CPF: ${cliente.cpf || ''}`;
+    
     if (qrContainer) {
       qrContainer.innerHTML = '';
-      new QRCode(qrContainer, {
-        text: `Cliente: ${cliente.nome} | Tel: ${cliente.telefone || ''} | CPF: ${cliente.cpf || ''}`,
-        width: 70,
-        height: 70
-      });
+      new QRCode(qrContainer, { text: qrText, width: 70, height: 70 });
     }
+    if (qrPrintContainer) {
+      qrPrintContainer.innerHTML = '';
+      new QRCode(qrPrintContainer, { text: qrText, width: 150, height: 150 });
+    }
+
+    const secaoHistorico = document.getElementById('secao-historico-cliente');
+    if (secaoHistorico) secaoHistorico.hidden = true;
 
     const historicoBox = document.getElementById('ficha-historico-lista');
     historicoBox.innerHTML = 'Carregando histórico...';
@@ -521,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         let html = '<ul style="margin:0; padding-left:15px; font-size:12px;">';
         hist.forEach(h => {
-          html += `<li>${formatDateTime(h.data_hora)} — <strong>${h.servico_nome}</strong> (${formatCurrency(h.valor)}) [Status: ${h.status}]</li>`;
+          html += `<li style="margin-bottom: 4px;">${formatDateTime(h.data_hora)} — <strong>${h.servico_nome}</strong> (${formatCurrency(h.valor)}) [Status: ${h.status}]</li>`;
         });
         html += '</ul>';
         historicoBox.innerHTML = html;
@@ -559,25 +571,17 @@ document.addEventListener('DOMContentLoaded', () => {
     fichaModal.style.display = 'none';
   });
 
-  document.getElementById('btn-imprimir-cartao')?.addEventListener('click', () => {
-    const cartaoHTML = document.getElementById('cartao-cliente-container').outerHTML;
-    const janelaImpressao = window.open('', '', 'width=600,height=400');
-    janelaImpressao.document.write(`
-      <html>
-        <head>
-          <title>Cartão de Identificação</title>
-          <style>body { font-family: Arial, sans-serif; padding: 20px; }</style>
-        </head>
-        <body>
-          ${cartaoHTML}
-          <script>window.print(); window.close();<\/script>
-        </body>
-      </html>
-    `);
-    janelaImpressao.document.close();
+  document.getElementById('btn-abrir-historico')?.addEventListener('click', () => {
+    const secao = document.getElementById('secao-historico-cliente');
+    if (secao) secao.hidden = !secao.hidden;
   });
 
-  document.getElementById('print-ficha-btn')?.addEventListener('click', () => {
+  document.getElementById('btn-fechar-historico')?.addEventListener('click', () => {
+    const secao = document.getElementById('secao-historico-cliente');
+    if (secao) secao.hidden = true;
+  });
+
+  document.getElementById('btn-imprimir-cartao')?.addEventListener('click', () => {
     window.print();
   });
 
