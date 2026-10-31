@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const authEyebrow = document.getElementById('auth-eyebrow');
   const authTitle = document.getElementById('auth-title');
   const authMessage = document.getElementById('auth-message');
-  const nameField = document.getElementById('name-field');
+  const registerFields = document.getElementById('register-fields');
   const serviceForm = document.getElementById('service-form');
   const serviceIdInput = document.getElementById('service-id');
   const serviceSubmitButton = document.getElementById('service-submit');
@@ -91,11 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const setAuthMode = (mode) => {
     authMode = mode;
     const isRegister = mode === 'register';
-    if (nameField) nameField.hidden = !isRegister;
-    if (authEyebrow) authEyebrow.textContent = isRegister ? 'CRIE SUA CONTA' : 'BEM-VINDA DE VOLTA';
+    if (registerFields) registerFields.hidden = !isRegister;
+    if (authEyebrow) authEyebrow.textContent = isRegister ? 'CRIE SUA CONTA & FICHA' : 'BEM-VINDA DE VOLTA';
     if (authTitle) authTitle.textContent = isRegister ? 'Crie sua conta' : 'Acesse sua conta';
     const submitButton = authForm ? authForm.querySelector('button[type="submit"]') : null;
-    if (submitButton) submitButton.textContent = isRegister ? 'Criar conta' : 'Entrar';
+    if (submitButton) submitButton.textContent = isRegister ? 'Criar conta & Preencher ficha' : 'Entrar';
   };
 
   const renderMasterMetrics = async () => {
@@ -926,18 +926,19 @@ document.addEventListener('DOMContentLoaded', () => {
   authForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(authForm);
-    const nome = formData.get('nome');
-    const email = formData.get('email');
-    const senha = formData.get('senha');
 
     try {
       if (authMode === 'register') {
-        await apiFetch('/cadastro', { method: 'POST', body: JSON.stringify({ nome, email, senha }) });
+        const dadosObj = Object.fromEntries(formData.entries());
+        await apiFetch('/cadastro', { method: 'POST', body: JSON.stringify(dadosObj) });
         setMessage(authMessage, 'Cadastrado com sucesso! Faça login.', false);
         setAuthMode('login');
         return;
       }
-      const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
+      const res = await apiFetch('/login', { 
+        method: 'POST', 
+        body: JSON.stringify({ email: formData.get('email'), senha: formData.get('senha') }) 
+      });
       saveSession(res.usuario);
       showToast(`Bem-vinda, ${res.usuario.nome}!`);
     } catch (err) {
