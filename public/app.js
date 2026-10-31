@@ -37,6 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const fichaClienteId = document.getElementById('ficha-cliente-id');
   const closeFichaModal = document.getElementById('close-ficha-modal');
 
+  // Elementos da Aba Crachá
+  const selectClienteCracha = document.getElementById('select-cliente-cracha');
+  const crachaNome = document.getElementById('cracha-nome');
+  const crachaTel = document.getElementById('cracha-tel');
+  const crachaCpf = document.getElementById('cracha-cpf');
+  const crachaNasc = document.getElementById('cracha-nasc');
+
   let currentUser = null;
   let authMode = 'login';
   let registeredClients = [];
@@ -71,14 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const apiFetch = async (path, options = {}) => {
-    const res = await fetch(`${apiBase}${path}`, {
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      ...options,
-    });
-    let data = {};
-    try { data = await res.json(); } catch (e) { data = {}; }
-    if (!res.ok) throw new Error(data?.mensagem || data?.error || `Erro (${res.status})`);
+    const res = await fetch(`${apiBase}${path}`, { credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, ...options, }); let data = {}; try { data = await res.json(); } catch (e) { data = {}; } if (!res.ok) throw new Error(data?.mensagem \vert{}\vert{} data?.error \vert{}\vert{} `Erro (${res.status})`);
     return data;
   };
 
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.innerHTML = `
               <div>
                 <strong>${a.servico_nome || 'Procedimento'}</strong>
-                <div class="muted" style="font-size: 12px;">Cliente: <strong>${a.usuario_nome || '—'}</strong> • ${formatDateTime(a.data_hora)}</div>
+                <div class="muted" style="font-size: 12px;">Cliente: <strong>${a.usuario_nome \vert{}\vert{} '—'}</strong> •${formatDateTime(a.data_hora)}</div>
               </div>
               <div style="font-weight: bold; color: #16a34a; font-size: 14px;">
                 ${formatCurrency(a.valor)}
@@ -184,14 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nomeServico = (a.servico_nome || '').replace(/;/g, ',');
         const dataFormatada = formatDateTime(a.data_hora);
         const valorFormatado = Number(a.valor || 0).toFixed(2).replace('.', ',');
-        csvContent += `${a.id};${nomeCliente};${nomeServico};${dataFormatada};${valorFormatado}\n`;
-      });
-
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `atendimentos_concluidos_${new Date().toISOString().slice(0, 10)}.csv`);
+        csvContent += `${a.id};${nomeCliente};${nomeServico};${dataFormatada};${valorFormatado}\n`; });  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.setAttribute('href', url); link.setAttribute('download', `atendimentos_concluidos_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -207,6 +200,41 @@ document.addEventListener('DOMContentLoaded', () => {
     exportarAtendimentosCSV();
   });
 
+  const atualizarSelectCracha = () => {
+    if (!selectClienteCracha) return;
+    selectClienteCracha.innerHTML = '<option value="">Selecione uma cliente...</option>';
+    registeredClients.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.nome;
+      selectClienteCracha.appendChild(opt);
+    });
+  };
+
+  selectClienteCracha?.addEventListener('change', (e) => {
+    const clienteId = e.target.value;
+    const cliente = registeredClients.find(c => String(c.id) === String(clienteId));
+    if (cliente) {
+      if (crachaNome) crachaNome.textContent = cliente.nome;
+      if (crachaTel) crachaTel.textContent = cliente.telefone || '—';
+      if (crachaCpf) crachaCpf.textContent = cliente.cpf || '—';
+      if (crachaNasc) crachaNasc.textContent = cliente.data_nascimento || '—';
+    } else {
+      if (crachaNome) crachaNome.textContent = 'Selecione uma cliente';
+      if (crachaTel) crachaTel.textContent = '—';
+      if (crachaCpf) crachaCpf.textContent = '—';
+      if (crachaNasc) crachaNasc.textContent = '—';
+    }
+  });
+
+  document.getElementById('btn-imprimir-cracha-selecionado')?.addEventListener('click', () => {
+    if (!selectClienteCracha.value) {
+      showToast('Selecione uma cliente para imprimir o crachá.', true);
+      return;
+    }
+    window.print();
+  });
+
   const setActiveView = (viewName) => {
     navButtons.forEach(btn => btn.classList.toggle('is-active', btn.dataset.view === viewName));
     viewPanels.forEach(panel => {
@@ -216,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if (viewName === 'metricas') renderMasterMetrics();
     if (viewName === 'clientes') renderClients();
+    if (viewName === 'cracha') atualizarSelectCracha();
   };
 
   const updateAdminVisibility = () => {
@@ -227,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadRegisteredClients = async () => {
     try {
       registeredClients = await apiFetch('/clientes');
+      atualizarSelectCracha();
       if (currentUser?.tipo === 'master' && inputUsuarioNome) {
         let datalist = document.getElementById('clientes-datalist');
         if (!datalist) {
@@ -298,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         services.forEach(s => {
           const opt = document.createElement('option');
           opt.value = s.id;
-          opt.textContent = `${s.nome} — ${formatCurrency(s.valor)}`;
+          opt.textContent = `${s.nome} —${formatCurrency(s.valor)}`;
           serviceSelect.appendChild(opt);
         });
       }
@@ -315,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
           row.innerHTML = `
             <div>
               <strong>${s.nome}</strong>
-              <div class="muted">${formatCurrency(s.valor)} • ${s.duracao_minutos} min</div>
+              <div class="muted">${formatCurrency(s.valor)} •${s.duracao_minutos} min</div>
             </div>
             <div style="display: flex; gap: 6px;">
               <button class="button" data-action="editar" style="background: #3b82f6; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">Editar</button>
@@ -336,34 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
           row.querySelector('[data-action="excluir"]').addEventListener('click', async () => {
             if (confirm(`Deseja excluir o procedimento "${s.nome}"?`)) {
               try {
-                await apiFetch(`/servicos/${s.id}`, { method: 'DELETE' });
-                showToast('Serviço removido com sucesso!');
-                renderServices();
-              } catch (err) {
-                showToast(err.message, true);
-              }
-            }
-          });
-
-          listEl.appendChild(row);
-        });
-      }
-    } catch (e) { console.error(e); }
-  };
-
-  serviceCancelButton?.addEventListener('click', () => {
-    serviceForm.reset();
-    if (serviceIdInput) serviceIdInput.value = '';
-    if (serviceSubmitButton) serviceSubmitButton.textContent = 'Adicionar serviço';
-    if (serviceCancelButton) serviceCancelButton.hidden = true;
-  });
-
-  serviceForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(serviceForm);
-    const id = formData.get('id');
-    try {
-      await apiFetch(id ? `/servicos/${id}` : '/servicos', {
+                await apiFetch(`/servicos/${s.id}`, { method: 'DELETE' }); showToast('Serviço removido com sucesso!'); renderServices(); } catch (err) { showToast(err.message, true); } } });  listEl.appendChild(row); }); } } catch (e) { console.error(e); } };  serviceCancelButton?.addEventListener('click', () => { serviceForm.reset(); if (serviceIdInput) serviceIdInput.value = ''; if (serviceSubmitButton) serviceSubmitButton.textContent = 'Adicionar serviço'; if (serviceCancelButton) serviceCancelButton.hidden = true; });  serviceForm?.addEventListener('submit', async (e) => { e.preventDefault(); const formData = new FormData(serviceForm); const id = formData.get('id'); try { await apiFetch(id ? `/servicos/${id}` : '/servicos', {
         method: id ? 'PUT' : 'POST',
         body: JSON.stringify({
           nome: formData.get('nome'),
@@ -429,9 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         card.querySelector('[data-action="excluir"]').addEventListener('click', async () => {
-          if (confirm(`Deseja excluir o cadastro de ${c.nome}?`)) {
-            try {
-              await apiFetch(`/clientes/${c.id}`, { method: 'DELETE' });
+          if (confirm(`Deseja excluir o cadastro de ${c.nome}?`)) { try { await apiFetch(`/clientes/${c.id}`, { method: 'DELETE' });
               showToast('Cliente removido!');
               renderClients();
             } catch (err) {
@@ -463,87 +464,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = formData.get('id');
 
     try {
-      await apiFetch(id ? `/clientes/${id}` : '/clientes', {
-        method: id ? 'PUT' : 'POST',
-        body: JSON.stringify({
-          nome: formData.get('nome'),
-          email: formData.get('email'),
-          data_nascimento: formData.get('data_nascimento'),
-          profissao: formData.get('profissao'),
-          endereco: formData.get('endereco'),
-          telefone: formData.get('telefone'),
-          cpf: formData.get('cpf')
-        })
-      });
-      clientForm.reset();
-      if (clientIdInput) clientIdInput.value = '';
-      if (clientFormTitle) clientFormTitle.textContent = 'Cadastrar Nova Cliente';
-      if (clientSubmitBtn) clientSubmitBtn.textContent = 'Cadastrar Cliente';
-      if (clientCancelBtn) clientCancelBtn.hidden = true;
-      renderClients();
-      loadRegisteredClients();
-      showToast(id ? 'Cliente atualizada com sucesso!' : 'Cliente cadastrada com sucesso!');
-    } catch (err) {
-      showToast(err.message, true);
-    }
-  });
-
-  const abrirFichaModal = async (cliente) => {
-    if (!fichaModal) return;
-    fichaClienteNome.textContent = cliente.nome;
-    fichaClienteId.value = cliente.id;
-    fichaForm.reset();
-
-    // Preenche o Cartão Digital na tela
-    document.getElementById('cartao-nome').textContent = cliente.nome;
-    document.getElementById('cartao-tel').textContent = cliente.telefone || '—';
-    document.getElementById('cartao-cpf').textContent = cliente.cpf || '—';
-    document.getElementById('cartao-nasc').textContent = cliente.data_nascimento || '—';
-
-    // Preenche os dados para Impressão Frente e Verso
-    document.getElementById('print-cartao-nome').textContent = cliente.nome;
-    document.getElementById('print-cartao-tel').textContent = cliente.telefone || '—';
-    document.getElementById('print-cartao-cpf').textContent = cliente.cpf || '—';
-    document.getElementById('print-cartao-nasc').textContent = cliente.data_nascimento || '—';
-
-    const qrContainer = document.getElementById('qrcode-ficha');
-    const qrPrintContainer = document.getElementById('print-qrcode-ficha');
-    
-    const qrText = `Cliente: ${cliente.nome} | Tel: ${cliente.telefone || ''} | CPF: ${cliente.cpf || ''}`;
-    
-    if (qrContainer) {
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, { text: qrText, width: 70, height: 70 });
-    }
-    if (qrPrintContainer) {
-      qrPrintContainer.innerHTML = '';
-      new QRCode(qrPrintContainer, { text: qrText, width: 150, height: 150 });
-    }
-
-    const secaoHistorico = document.getElementById('secao-historico-cliente');
-    if (secaoHistorico) secaoHistorico.hidden = true;
-
-    const historicoBox = document.getElementById('ficha-historico-lista');
-    historicoBox.innerHTML = 'Carregando histórico...';
-
-    try {
-      const hist = await apiFetch(`/clientes/${encodeURIComponent(cliente.nome)}/historico`);
+      await apiFetch(id ? `/clientes/${id}` : '/clientes', { method: id ? 'PUT' : 'POST', body: JSON.stringify({ nome: formData.get('nome'), email: formData.get('email'), data_nascimento: formData.get('data_nascimento'), profissao: formData.get('profissao'), endereco: formData.get('endereco'), telefone: formData.get('telefone'), cpf: formData.get('cpf') }) }); clientForm.reset(); if (clientIdInput) clientIdInput.value = ''; if (clientFormTitle) clientFormTitle.textContent = 'Cadastrar Nova Cliente'; if (clientSubmitBtn) clientSubmitBtn.textContent = 'Cadastrar Cliente'; if (clientCancelBtn) clientCancelBtn.hidden = true; renderClients(); loadRegisteredClients(); showToast(id ? 'Cliente atualizada com sucesso!' : 'Cliente cadastrada com sucesso!'); } catch (err) { showToast(err.message, true); } });  const abrirFichaModal = async (cliente) => { if (!fichaModal) return; fichaClienteNome.textContent = cliente.nome; fichaClienteId.value = cliente.id; fichaForm.reset();  const secaoHistorico = document.getElementById('secao-historico-cliente'); if (secaoHistorico) secaoHistorico.hidden = true;  const historicoBox = document.getElementById('ficha-historico-lista'); historicoBox.innerHTML = 'Carregando histórico...';  try { const hist = await apiFetch(`/clientes/${encodeURIComponent(cliente.nome)}/historico`);
       if (!hist.length) {
         historicoBox.innerHTML = '<p class="muted">Nenhum atendimento realizado ainda.</p>';
       } else {
         let html = '<ul style="margin:0; padding-left:15px; font-size:12px;">';
         hist.forEach(h => {
-          html += `<li style="margin-bottom: 4px;">${formatDateTime(h.data_hora)} — <strong>${h.servico_nome}</strong> (${formatCurrency(h.valor)}) [Status: ${h.status}]</li>`;
-        });
-        html += '</ul>';
-        historicoBox.innerHTML = html;
-      }
-    } catch (err) {
-      historicoBox.innerHTML = '<span style="color:red; font-size:12px;">Erro ao carregar histórico.</span>';
-    }
-
-    try {
-      const ficha = await apiFetch(`/clientes/${cliente.id}/ficha`);
+          html += `<li style="margin-bottom: 4px;">${formatDateTime(h.data_hora)} — <strong>${h.servico_nome}</strong> (${formatCurrency(h.valor)}) [Status: ${h.status}]</li>`; }); html += '</ul>'; historicoBox.innerHTML = html; } } catch (err) { historicoBox.innerHTML = '<span style="color:red; font-size:12px;">Erro ao carregar histórico.</span>'; }  try { const ficha = await apiFetch(`/clientes/${cliente.id}/ficha`);
       if (ficha) {
         const setRadio = (name, val) => {
           if (!val) return;
@@ -581,10 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (secao) secao.hidden = true;
   });
 
-  document.getElementById('btn-imprimir-cartao')?.addEventListener('click', () => {
-    window.print();
-  });
-
   fichaForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const clienteId = fichaClienteId.value;
@@ -596,28 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formData = new FormData(fichaForm);
     const getRadioVal = (name) => {
-      const checked = fichaForm.querySelector(`input[name="${name}"]:checked`);
-      return checked ? checked.value : '';
-    };
-
-    const data = {
-      usa_rimel: getRadioVal('usa_rimel'),
-      problemas_tireoide: getRadioVal('problemas_tireoide'),
-      possui_diabetes: getRadioVal('possui_diabetes'),
-      gestante: getRadioVal('gestante'),
-      procedimento_recente_olhos: getRadioVal('procedimento_recente_olhos'),
-      procedimento_recente_olhos_qual: formData.get('procedimento_recente_olhos_qual') || '',
-      possui_alergia: getRadioVal('possui_alergia'),
-      possui_alergia_qual: formData.get('possui_alergia_qual') || '',
-      sensibilidade_olhos: getRadioVal('sensibilidade_olhos'),
-      usa_lentes_contato: getRadioVal('usa_lentes_contato'),
-      dorme_brucos_lado: getRadioVal('dorme_brucos_lado'),
-      fez_extensao_antes: getRadioVal('fez_extensao_antes'),
-      observacoes: formData.get('observacoes') || ''
-    };
-
-    try {
-      await apiFetch(`/clientes/${clienteId}/ficha`, {
+      const checked = fichaForm.querySelector(`input[name="${name}"]:checked`); return checked ? checked.value : ''; };  const data = { usa_rimel: getRadioVal('usa_rimel'), problemas_tireoide: getRadioVal('problemas_tireoide'), possui_diabetes: getRadioVal('possui_diabetes'), gestante: getRadioVal('gestante'), procedimento_recente_olhos: getRadioVal('procedimento_recente_olhos'), procedimento_recente_olhos_qual: formData.get('procedimento_recente_olhos_qual') \vert{}\vert{} '', possui_alergia: getRadioVal('possui_alergia'), possui_alergia_qual: formData.get('possui_alergia_qual') \vert{}\vert{} '', sensibilidade_olhos: getRadioVal('sensibilidade_olhos'), usa_lentes_contato: getRadioVal('usa_lentes_contato'), dorme_brucos_lado: getRadioVal('dorme_brucos_lado'), fez_extensao_antes: getRadioVal('fez_extensao_antes'), observacoes: formData.get('observacoes') \vert{}\vert{} '' };  try { await apiFetch(`/clientes/${clienteId}/ficha`, {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -642,31 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const excluirAgendamento = async (id) => {
     if (!confirm('Deseja realmente excluir este agendamento?')) return;
     try {
-      await apiFetch(`/agendamentos/${id}`, { method: 'DELETE' });
-      showToast('Agendamento excluído!');
-      await renderAppointments();
-      await renderMasterMetrics();
-    } catch (e) {
-      showToast(e.message || 'Erro ao excluir agendamento', true);
-    }
-  };
-
-  const verificarLembretesVésperaNoLogin = async () => {
-    try {
-      const appointments = await apiFetch('/agendamentos');
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-
-      appointments.forEach(apt => {
-        if ((apt.status || 'pendente') !== 'pendente') return;
-        const dataApt = new Date(apt.data_hora);
-        dataApt.setHours(0, 0, 0, 0);
-
-        const diffTime = dataApt - hoje;
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 1) {
-          const chaveAviso = `aviso_login_amanha_${apt.id}`;
+      await apiFetch(`/agendamentos/${id}`, { method: 'DELETE' }); showToast('Agendamento excluído!'); await renderAppointments(); await renderMasterMetrics(); } catch (e) { showToast(e.message \vert{}\vert{} 'Erro ao excluir agendamento', true); } };  const verificarLembretesVésperaNoLogin = async () => { try { const appointments = await apiFetch('/agendamentos'); const hoje = new Date(); hoje.setHours(0, 0, 0, 0);  appointments.forEach(apt => { if ((apt.status \vert{}\vert{} 'pendente') !== 'pendente') return; const dataApt = new Date(apt.data_hora); dataApt.setHours(0, 0, 0, 0);  const diffTime = dataApt - hoje; const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));  if (diffDays === 1) { const chaveAviso = `aviso_login_amanha_${apt.id}`;
           if (!sessionStorage.getItem(chaveAviso)) {
             alert(`⚠️ Lembrete de Reserva:\nAmanhã (${formatDateTime(apt.data_hora)}) você tem atendimento agendado com ${apt.usuario_nome} (${apt.servico_nome})!`);
             sessionStorage.setItem(chaveAviso, 'true');
@@ -694,288 +572,4 @@ document.addEventListener('DOMContentLoaded', () => {
     const nomeMesFormatado = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
 
     let html = `
-      <div style="background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <button id="btn-mes-anterior" class="button" style="background: #f1f5f9; color: #333; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">◀</button>
-          <h4 style="margin: 0; font-size: 13px; text-align: center; color: #333; text-transform: capitalize;">${nomeMesFormatado}</h4>
-          <button id="btn-mes-proximo" class="button" style="background: #f1f5f9; color: #333; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">▶</button>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 6px;">
-          <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 12px;">
-    `;
-
-    for (let i = 0; i < primeiroDiaMes; i++) {
-      html += `<div></div>`;
-    }
-
-    for (let dia = 1; dia <= ultimoDiaMes; dia++) {
-      const mesStr = String(mes + 1).padStart(2, '0');
-      const diaStr = String(dia).padStart(2, '0');
-      const dataFormatada = `${ano}-${mesStr}-${diaStr}`;
-      
-      const temReserva = datasComAgendamento.includes(dataFormatada);
-      
-      const estiloCirculo = temReserva 
-        ? 'background: #fdf2f8; border: 2px solid #db2777; color: #db2777; font-weight: bold; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto;' 
-        : 'padding: 4px;';
-
-      html += `<div style="${estiloCirculo}">${dia}</div>`;
-    }
-
-    html += `</div></div>`;
-    container.innerHTML = html;
-
-    document.getElementById('btn-mes-anterior')?.addEventListener('click', () => {
-      currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-      renderizarCalendarioLateral(appointments);
-    });
-
-    document.getElementById('btn-mes-proximo')?.addEventListener('click', () => {
-      currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-      renderizarCalendarioLateral(appointments);
-    });
-  };
-
-  const renderAppointments = async () => {
-    const listEl = document.getElementById('appointment-list');
-    const statMine = document.getElementById('stat-mine');
-    const statNext = document.getElementById('stat-next');
-    const statNextDetail = document.getElementById('stat-next-detail');
-    const emptyState = document.getElementById('empty-state');
-
-    const startDateInput = document.getElementById('appointment-date-start');
-    const endDateInput = document.getElementById('appointment-date-end');
-    const startDate = startDateInput ? startDateInput.value : '';
-    const endDate = endDateInput ? endDateInput.value : '';
-
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    try {
-      if (!registeredClients.length) {
-        try { registeredClients = await apiFetch('/clientes'); } catch (e) {}
-      }
-
-      const appointments = await apiFetch('/agendamentos');
-      renderizarCalendarioLateral(appointments);
-
-      const filterVal = appointmentFilter ? appointmentFilter.value : 'todos';
-
-      let filtered = appointments.filter(a => {
-        if (filterVal !== 'todos' && String(a.servico_id) !== filterVal) {
-          return false;
-        }
-
-        const appDateStr = a.data_hora ? a.data_hora.split('T')[0] : '';
-
-        if (startDate || endDate) {
-          if (startDate && appDateStr < startDate) return false;
-          if (endDate && appDateStr > endDate) return false;
-        } else {
-          if (appDateStr < todayStr) return false;
-        }
-
-        return true;
-      });
-
-      if (statMine) statMine.textContent = String(filtered.length || 0);
-
-      const next = [...appointments]
-        .filter(a => (a.status || 'pendente') === 'pendente' && new Date(a.data_hora).getTime() > Date.now())
-        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
-
-      if (next) {
-        if (statNext) statNext.textContent = formatDateTime(next.data_hora);
-        if (statNextDetail) statNextDetail.textContent = `${next.servico_nome} (${next.usuario_nome})`;
-      } else {
-        if (statNext) statNext.textContent = '—';
-        if (statNextDetail) statNextDetail.textContent = 'Nenhum agendamento futuro';
-      }
-
-      if (listEl) {
-        listEl.innerHTML = '';
-        if (!filtered.length) {
-          if (emptyState) emptyState.hidden = false;
-          listEl.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
-        } else {
-          if (emptyState) emptyState.hidden = true;
-          filtered.forEach(apt => {
-            const dateObj = new Date(apt.data_hora);
-            const dayNumber = String(dateObj.getDate()).padStart(2, '0');
-
-            const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
-            const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
-            
-            const telefoneLimpo = telefone ? telefone.replace(/\D/g, '') : '';
-            const mensagem = `Olá, ${apt.usuario_nome}! Passando para confirmar seu agendamento de *${apt.servico_nome}* para o dia *${formatDateTime(apt.data_hora)}* no GH Lash Studio. Nos vemos lá!`;
-            const urlWhatsApp = telefoneLimpo 
-              ? `https://wa.me/55${telefoneLimpo.startsWith('55') ? telefoneLimpo.slice(2) : telefoneLimpo}?text=${encodeURIComponent(mensagem)}` 
-              : '#';
-
-            const row = document.createElement('a');
-            row.href = telefoneLimpo ? urlWhatsApp : '#';
-            row.target = '_blank';
-            row.className = 'appointment-item';
-            row.style.cursor = 'pointer';
-            row.style.textDecoration = 'none';
-            row.style.color = 'inherit';
-            row.style.display = 'flex';
-            row.style.justifyContent = 'space-between';
-            row.style.alignItems = 'center';
-            row.title = telefone ? 'Clique para enviar mensagem no WhatsApp da cliente' : 'Cliente sem telefone cadastrado';
-
-            const isMaster = currentUser?.tipo === 'master';
-            const status = apt.status || 'pendente';
-
-            let statusCor = '#d97706';
-            if (status === 'concluido') statusCor = '#16a34a';
-            if (status === 'cancelado') statusCor = '#dc3545';
-
-            row.innerHTML = `
-              <div style="display: flex; align-items: center;">
-                <span class="day-badge">${dayNumber}</span>
-                <div>
-                  <strong>${apt.servico_nome} 💬</strong>
-                  <div class="muted">Cliente: <strong>${apt.usuario_nome}</strong> • ${formatDateTime(apt.data_hora)}</div>
-                  <div style="font-size: 11px; margin-top: 4px; color: ${statusCor}; font-weight: bold;">
-                    Status: ${status.toUpperCase()}
-                  </div>
-                </div>
-              </div>
-              <div style="display: flex; gap: 6px; align-items: center;" onclick="event.preventDefault(); event.stopPropagation();">
-                <div class="value-badge">${formatCurrency(apt.valor)}</div>
-                ${isMaster && status === 'pendente' ? `
-                  <button class="button" data-action="concluir" data-id="${apt.id}" style="background:#16a34a; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Concluir</button>
-                  <button class="button" data-action="cancelar" data-id="${apt.id}" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Não veio</button>
-                ` : ''}
-                ${isMaster ? `<button class="button button-danger" data-action="excluir" data-id="${apt.id}" style="background:#64748b; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Excluir</button>` : ''}
-              </div>
-            `;
-
-            row.addEventListener('click', (e) => {
-              if (!telefone) {
-                e.preventDefault();
-                showToast(`Cliente "${apt.usuario_nome}" não possui telefone cadastrado na ficha.`, true);
-              }
-            });
-
-            row.querySelector('[data-action="concluir"]')?.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              alterarStatusAtendimento(apt.id, 'concluir');
-            });
-            row.querySelector('[data-action="cancelar"]')?.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              alterarStatusAtendimento(apt.id, 'cancelar');
-            });
-            row.querySelector('[data-action="excluir"]')?.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              excluirAgendamento(apt.id);
-            });
-
-            listEl.appendChild(row);
-          });
-        }
-      }
-    } catch (e) { console.error(e); }
-  };
-
-  document.getElementById('appointment-date-start')?.addEventListener('change', renderAppointments);
-  document.getElementById('appointment-date-end')?.addEventListener('change', renderAppointments);
-  
-  document.getElementById('clear-date-filter')?.addEventListener('click', () => {
-    const startInput = document.getElementById('appointment-date-start');
-    const endInput = document.getElementById('appointment-date-end');
-    if (startInput) startInput.value = '';
-    if (endInput) endInput.value = '';
-    renderAppointments();
-  });
-
-  document.querySelectorAll('[data-auth-mode]').forEach(btn => btn.addEventListener('click', () => setAuthMode(btn.dataset.authMode)));
-
-  navButtons.forEach(btn => btn.addEventListener('click', () => {
-    if ((btn.dataset.view === 'cadastros' || btn.dataset.view === 'metricas' || btn.dataset.view === 'clientes') && currentUser?.tipo !== 'master') {
-      showToast('Acesso restrito ao master.', true);
-      return;
-    }
-    setActiveView(btn.dataset.view);
-  }));
-
-  appointmentFilter?.addEventListener('change', renderAppointments);
-
-  authForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(authForm);
-    const nome = formData.get('nome');
-    const email = formData.get('email');
-    const senha = formData.get('senha');
-
-    try {
-      if (authMode === 'register') {
-        await apiFetch('/cadastro', { method: 'POST', body: JSON.stringify({ nome, email, senha }) });
-        setMessage(authMessage, 'Cadastrado com sucesso! Faça login.', false);
-        setAuthMode('login');
-        return;
-      }
-      const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
-      saveSession(res.usuario);
-      showToast(`Bem-vinda, ${res.usuario.nome}!`);
-    } catch (err) {
-      setMessage(authMessage, err.message, true);
-    }
-  });
-
-  appointmentForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(appointmentForm);
-    try {
-      await apiFetch('/agendamentos', {
-        method: 'POST',
-        body: JSON.stringify({
-          servico_id: formData.get('servico_id'),
-          data_hora: formData.get('data_hora'),
-          usuario_nome: formData.get('usuario_nome')
-        })
-      });
-      appointmentForm.reset();
-      if (currentUser?.tipo !== 'master' && inputUsuarioNome) inputUsuarioNome.value = currentUser.nome;
-      showToast('Agendamento criado com sucesso!');
-      renderAppointments();
-      renderMasterMetrics();
-    } catch (err) {
-      showToast(err.message, true);
-    }
-  });
-
-  logoutButton?.addEventListener('click', () => {
-    clearSession();
-    showToast('Sessão encerrada.');
-  });
-
-  const boot = async () => {
-    setAuthMode('login');
-    setActiveView('agenda');
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        currentUser = JSON.parse(saved);
-        fillAccount(currentUser);
-        updateAdminVisibility();
-        appScreen.hidden = false;
-        authScreen.hidden = true;
-        renderServices();
-        renderAppointments();
-        loadRegisteredClients();
-        verificarLembretesVésperaNoLogin();
-        return;
-      }
-    } catch (e) {}
-    authScreen.hidden = false;
-    appScreen.hidden = true;
-  };
-
-  boot();
-});
+      <div style="background: #fff; padding: 12px; border-radius: 8px; box
