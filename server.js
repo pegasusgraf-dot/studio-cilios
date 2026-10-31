@@ -112,7 +112,7 @@ app.post('/api/cadastro', async (req, res) => {
       [clientId, nome, email]
     );
 
-    // 3. Cria automaticamente uma ficha em branco/padrão vinculada à nova cliente
+    // 3. Cria automaticamente uma ficha em branco vinculada à nova cliente
     const fichaId = makeId('fich');
     await pool.query(
       `INSERT INTO client_fichas (
