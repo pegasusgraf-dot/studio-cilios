@@ -91,9 +91,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const setAuthMode = (mode) => {
     authMode = mode;
     const isRegister = mode === 'register';
+    
+    // Controla a visibilidade dos campos de cadastro de cliente
     if (registerFields) registerFields.hidden = !isRegister;
+
     if (authEyebrow) authEyebrow.textContent = isRegister ? 'CRIE SUA CONTA' : 'BEM-VINDA DE VOLTA';
     if (authTitle) authTitle.textContent = isRegister ? 'Crie sua conta' : 'Acesse sua conta';
+    
     const submitButton = authForm ? authForm.querySelector('button[type="submit"]') : null;
     if (submitButton) submitButton.textContent = isRegister ? 'Criar conta' : 'Entrar';
   };
