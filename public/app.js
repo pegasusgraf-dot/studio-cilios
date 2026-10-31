@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fichaClienteId = document.getElementById('ficha-cliente-id');
   const closeFichaModal = document.getElementById('close-ficha-modal');
 
-  // Elementos da Aba Crachá
+  // Elementos da Aba Crachá de Clientes
   const selectClienteCracha = document.getElementById('select-cliente-cracha');
   const crachaNome = document.getElementById('cracha-nome');
   const crachaTel = document.getElementById('cracha-tel');
@@ -247,6 +247,22 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     window.print();
+  });
+
+  // Lógica para carregar o logotipo personalizado no crachá
+  document.getElementById('input-logo-cracha')?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(uploadEvent) {
+        const previewLogo = document.getElementById('preview-logo-cracha');
+        if (previewLogo) {
+          previewLogo.src = uploadEvent.target.result;
+          previewLogo.hidden = false;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   });
 
   const setActiveView = (viewName) => {
