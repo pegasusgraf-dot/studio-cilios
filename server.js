@@ -399,17 +399,10 @@ app.delete('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => 
   }
 });
 
+// Rota ajustada para retornar todos os agendamentos para qualquer usuário autenticado
 app.get('/api/agendamentos', requireAuth, async (req, res) => {
-  const user = req.session.user;
   try {
-    let query = 'SELECT * FROM appointments';
-    let params = [];
-    if (user.tipo !== 'master') {
-      query += ' WHERE usuario_id = $1';
-      params.push(user.id);
-    }
-    query += ' ORDER BY data_hora ASC';
-    const result = await pool.query(query, params);
+    const result = await pool.query('SELECT * FROM appointments ORDER BY data_hora ASC');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ mensagem: 'Erro ao buscar agendamentos.' });
