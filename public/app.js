@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const fichaClienteId = document.getElementById('ficha-cliente-id');
   const closeFichaModal = document.getElementById('close-ficha-modal');
 
-  // Elementos da Aba Crachá de Clientes
   const selectClienteCracha = document.getElementById('select-cliente-cracha');
   const crachaNome = document.getElementById('cracha-nome');
   const crachaTel = document.getElementById('cracha-tel');
@@ -581,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setRadio('fez_extensao_antes', ficha.fez_extensao_antes);
 
         if (fichaForm.procedimento_recente_olhos_qual) fichaForm.procedimento_recente_olhos_qual.value = ficha.procedimento_recente_olhos_qual || '';
-        if (fichaForm.possui_alergia_qual) fichaForm.possui_alergia_qual.value = ficha.alergia_qual || '';
+        if (fichaForm.alergia_qual) fichaForm.alergia_qual.value = ficha.alergia_qual || '';
         if (fichaForm.observacoes) fichaForm.observacoes.value = ficha.observacoes || '';
       }
     } catch (e) {}
@@ -626,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
       procedimento_recente_olhos: getRadioVal('procedimento_recente_olhos'),
       procedimento_recente_olhos_qual: formData.get('procedimento_recente_olhos_qual') || '',
       possui_alergia: getRadioVal('possui_alergia'),
-      possui_alergia_qual: formData.get('possui_alergia_qual') || '',
+      alergia_qual: formData.get('alergia_qual') || '',
       sensibilidade_olhos: getRadioVal('sensibilidade_olhos'),
       usa_lentes_contato: getRadioVal('usa_lentes_contato'),
       dorme_brucos_lado: getRadioVal('dorme_brucos_lado'),
