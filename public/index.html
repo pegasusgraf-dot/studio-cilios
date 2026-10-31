@@ -79,9 +79,9 @@
   <body>
     <main id="auth-screen" class="auth-layout">
       <section class="auth-intro">
-        <div class="brand brand-light" style="font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-          <span class="brand-mark" style="background: #3b0764; color: #ffffff; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: 800;">GH</span>
-          <span>GH Lash Studio<span class="brand-period" style="color: #fef08a;">.</span></span>
+        <!-- LOGO GRANDE EM DESTAQUE NO TOPO DA TELA DE LOGIN -->
+        <div class="brand brand-light" style="font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 12px;">
+          <img src="img/logo.png" alt="GH Lash Studio" style="max-height: 65px; max-width: 180px; object-fit: contain;">
         </div>
         <div class="intro-copy">
           <p class="eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.9; font-weight: bold;">REFERÊNCIA EM EXTENSÃO DE CÍLIOS</p>
@@ -123,9 +123,9 @@
 
     <div id="app-screen" class="app-shell" hidden>
       <header class="topbar">
-        <a class="brand brand-dark" href="#agenda">
-          <span class="brand-mark" style="background: #3b0764; color: white;">GH</span>
-          <span>GH Lash Studio</span>
+        <!-- LOGO PEQUENO NO CABEÇALHO DO SISTEMA (SUBSTITUINDO O QUADRADO "GH") -->
+        <a class="brand brand-dark" href="#agenda" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+          <img src="img/logo.png" alt="GH Lash Studio" style="max-height: 38px; max-width: 110px; object-fit: contain;">
         </a>
         <nav class="main-nav">
           <button class="nav-link is-active" type="button" data-view="agenda">Agenda de Horários</button>
