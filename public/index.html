@@ -39,7 +39,7 @@
         text-align: center;
       }
 
-      /* Estrutura de Impressão do Cartão Dobrável (Frente e Verso na mesma folha) */
+      /* Estilo para impressão do Cartão Dobrável (Frente e Verso na mesma folha) */
       .cartao-imprimir-wrapper { display: none; }
 
       @media print {
@@ -50,7 +50,7 @@
           flex-direction: row;
           justify-content: center;
           align-items: center;
-          gap: 10mm;
+          gap: 15mm;
           position: absolute;
           left: 0;
           top: 0;
@@ -62,9 +62,9 @@
         .pagina-cartao {
           width: 85mm;
           height: 54mm;
-          border: 2px dashed #333;
+          border: 2px dashed #000;
           border-radius: 6px;
-          padding: 12px;
+          padding: 15px;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -80,9 +80,9 @@
     <div class="cartao-imprimir-wrapper">
       <!-- LADO FRENTE -->
       <div class="pagina-cartao" style="align-items: flex-start; text-align: left;">
-        <div style="font-size: 8px; text-transform: uppercase; font-weight: bold; color: #a855f7; letter-spacing: 1px; margin-bottom: 4px;">GH Lash Studio • Frente</div>
-        <h3 id="print-cartao-nome" style="margin: 0 0 8px 0; font-size: 15px; color: #3b0764;">Nome da Cliente</h3>
-        <div style="font-size: 11px; color: #333; line-height: 1.4;">
+        <div style="font-size: 9px; text-transform: uppercase; font-weight: bold; color: #a855f7; letter-spacing: 1px; margin-bottom: 6px;">GH Lash Studio • Frente</div>
+        <h3 id="print-cartao-nome" style="margin: 0 0 10px 0; font-size: 16px; color: #3b0764;">Nome da Cliente</h3>
+        <div style="font-size: 11px; color: #333; line-height: 1.5;">
           <div><strong>Telefone:</strong> <span id="print-cartao-tel">—</span></div>
           <div><strong>CPF:</strong> <span id="print-cartao-cpf">—</span></div>
           <div><strong>Nascimento:</strong> <span id="print-cartao-nasc">—</span></div>
@@ -90,7 +90,7 @@
       </div>
       <!-- LADO VERSO (QR CODE) -->
       <div class="pagina-cartao" style="text-align: center;">
-        <div style="font-size: 8px; font-weight: bold; color: #666; margin-bottom: 6px; text-transform: uppercase;">GH Lash Studio • Verso</div>
+        <div style="font-size: 9px; font-weight: bold; color: #666; margin-bottom: 8px; text-transform: uppercase;">GH Lash Studio • Verso</div>
         <div id="print-qrcode-ficha" style="display: flex; justify-content: center;"></div>
       </div>
     </div>
