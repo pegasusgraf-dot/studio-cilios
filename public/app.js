@@ -938,7 +938,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setAuthMode('login');
         return;
       }
-      const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) => {} });
+      const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, senha }) });
       saveSession(res.usuario);
       showToast(`Bem-vinda, ${res.usuario.nome}!`);
     } catch (err) {
