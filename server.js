@@ -79,6 +79,7 @@ app.post('/api/logout', (req, res) => {
   res.json({ mensagem: 'Sessão encerrada.' });
 });
 
+// CADASTRO AUTOMÁTICO: Cria Usuário + Cliente + Ficha Inicial
 app.post('/api/cadastro', async (req, res) => {
   const nome = String(req.body.nome || '').trim();
   const email = String(req.body.email || '').trim().toLowerCase();
@@ -104,11 +105,27 @@ app.post('/api/cadastro', async (req, res) => {
       [userId, nome, email, senhaHash, tipo]
     );
 
-    // 2. Insere automaticamente os dados na tabela de clientes do estúdio
+    // 2. Insere automaticamente na tabela de clientes
     const clientId = makeId('cli');
     await pool.query(
       'INSERT INTO clients (id, nome, email) VALUES ($1, $2, $3)',
       [clientId, nome, email]
+    );
+
+    // 3. Cria automaticamente uma ficha em branco/padrão vinculada à nova cliente
+    const fichaId = makeId('fich');
+    await pool.query(
+      `INSERT INTO client_fichas (
+        id, cliente_id, usa_rimel, problemas_tireoide, possui_diabetes, gestante, 
+        procedimento_recente_olhos, procedimento_recente_olhos_qual, possui_alergia, 
+        alergia_qual, sensibilidade_olhos, usa_lentes_contato, dorme_brucos_lado, 
+        fez_extensao_antes, observacoes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+      [
+        fichaId,
+        clientId,
+        'nao', 'nao', 'nao', 'nao', 'nao', '', 'nao', '', 'nao', 'nao', 'nao', 'nao', 'Cadastrada via aplicativo.'
+      ]
     );
 
     res.status(201).json({ id: userId, mensagem: 'Cadastro realizado com sucesso.' });
@@ -407,7 +424,6 @@ app.delete('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => 
   }
 });
 
-// Retorna todos os agendamentos para qualquer usuário logado ver a agenda geral
 app.get('/api/agendamentos', requireAuth, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM appointments ORDER BY data_hora ASC');
