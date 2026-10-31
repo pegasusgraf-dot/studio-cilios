@@ -39,31 +39,32 @@
         text-align: center;
       }
 
-      /* Estrutura de Impressão do Cartão (Frente e Verso) */
+      /* Estrutura de Impressão do Cartão Dobrável (Frente e Verso na mesma folha) */
       .cartao-imprimir-wrapper { display: none; }
 
       @media print {
         body * { visibility: hidden; }
         .cartao-imprimir-wrapper, .cartao-imprimir-wrapper * { visibility: visible; }
         .cartao-imprimir-wrapper {
-          display: block;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          gap: 10mm;
           position: absolute;
           left: 0;
           top: 0;
           width: 100vw;
           height: 100vh;
           background: white;
-          padding: 10px;
           box-sizing: border-box;
         }
         .pagina-cartao {
           width: 85mm;
           height: 54mm;
-          border: 1px dashed #999;
-          border-radius: 8px;
-          padding: 15px;
-          margin: 0 auto 15mm auto;
-          page-break-after: always;
+          border: 2px dashed #333;
+          border-radius: 6px;
+          padding: 12px;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -75,21 +76,21 @@
     </style>
   </head>
   <body>
-    <!-- Container oculto para a impressão Frente e Verso do Cartão -->
+    <!-- Container para a impressão lado a lado (frente e verso na mesma página para dobra) -->
     <div class="cartao-imprimir-wrapper">
-      <!-- FRENTE DO CARTÃO -->
+      <!-- LADO FRENTE -->
       <div class="pagina-cartao" style="align-items: flex-start; text-align: left;">
-        <div style="font-size: 9px; text-transform: uppercase; font-weight: bold; color: #a855f7; letter-spacing: 1px; margin-bottom: 5px;">GH Lash Studio • Cartão de Identificação</div>
-        <h3 id="print-cartao-nome" style="margin: 0 0 10px 0; font-size: 16px; color: #3b0764;">Nome da Cliente</h3>
-        <div style="font-size: 11px; color: #333; line-height: 1.5;">
+        <div style="font-size: 8px; text-transform: uppercase; font-weight: bold; color: #a855f7; letter-spacing: 1px; margin-bottom: 4px;">GH Lash Studio • Frente</div>
+        <h3 id="print-cartao-nome" style="margin: 0 0 8px 0; font-size: 15px; color: #3b0764;">Nome da Cliente</h3>
+        <div style="font-size: 11px; color: #333; line-height: 1.4;">
           <div><strong>Telefone:</strong> <span id="print-cartao-tel">—</span></div>
           <div><strong>CPF:</strong> <span id="print-cartao-cpf">—</span></div>
           <div><strong>Nascimento:</strong> <span id="print-cartao-nasc">—</span></div>
         </div>
       </div>
-      <!-- VERSO DO CARTÃO (QR CODE GRANDE) -->
-      <div class="pagina-cartao">
-        <div style="font-size: 10px; font-weight: bold; color: #666; margin-bottom: 8px; text-transform: uppercase;">QR Code de Acesso</div>
+      <!-- LADO VERSO (QR CODE) -->
+      <div class="pagina-cartao" style="text-align: center;">
+        <div style="font-size: 8px; font-weight: bold; color: #666; margin-bottom: 6px; text-transform: uppercase;">GH Lash Studio • Verso</div>
         <div id="print-qrcode-ficha" style="display: flex; justify-content: center;"></div>
       </div>
     </div>
@@ -384,7 +385,7 @@
             
             <!-- BOTÕES SEPARADOS -->
             <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-              <button type="button" id="btn-imprimir-cartao" class="button" style="background: #a855f7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; flex: 1;">🖨 Imprimir Cartão (Frente e Verso)</button>
+              <button type="button" id="btn-imprimir-cartao" class="button" style="background: #a855f7; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; flex: 1;">🖨 Imprimir Cartão (Frente e Verso na Folha)</button>
               <button type="button" id="btn-abrir-historico" class="button" style="background: #3b82f6; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; flex: 1;">📋 Ver Histórico de Atendimentos</button>
             </div>
 
