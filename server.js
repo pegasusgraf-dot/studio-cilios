@@ -240,18 +240,12 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
     procedimento_recente_olhos,
     procedimento_recente_olhos_qual,
     possui_alergia,
-    possui_alergia_qual, // Correção: Mapeado para capturar do req.body
+    alergia_qual,
     sensibilidade_olhos,
     usa_lentes_contato,
     dorme_brucos_lado,
     fez_extensao_antes,
-    observacoes,
-    mapping,
-    estilo,
-    modelo_fios,
-    espessura,
-    curvatura,
-    adesivo_cola
+    observacoes
   } = req.body;
 
   try {
@@ -273,14 +267,8 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
          dorme_brucos_lado = $11, 
          fez_extensao_antes = $12, 
          observacoes = $13, 
-         mapping = $14, 
-         estilo = $15, 
-         modelo_fios = $16, 
-         espessura = $17, 
-         curvatura = $18, 
-         adesivo_cola = $19, 
          atualizado_em = NOW() 
-         WHERE cliente_id = $20`,
+         WHERE cliente_id = $14`,
         [
           String(usa_rimel || ''),
           String(problemas_tireoide || ''),
@@ -289,18 +277,12 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
           String(procedimento_recente_olhos || ''),
           String(procedimento_recente_olhos_qual || ''),
           String(possui_alergia || ''),
-          String(possui_alergia_qual || ''), // Passando a variável correta para o banco
+          String(alergia_qual || ''),
           String(sensibilidade_olhos || ''),
           String(usa_lentes_contato || ''),
           String(dorme_brucos_lado || ''),
           String(fez_extensao_antes || ''),
           String(observacoes || ''),
-          String(mapping || ''),
-          String(estilo || ''),
-          String(modelo_fios || ''),
-          String(espessura || ''),
-          String(curvatura || ''),
-          String(adesivo_cola || ''),
           clienteId
         ]
       );
@@ -311,8 +293,8 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
           id, cliente_id, usa_rimel, problemas_tireoide, possui_diabetes, gestante, 
           procedimento_recente_olhos, procedimento_recente_olhos_qual, possui_alergia, 
           alergia_qual, sensibilidade_olhos, usa_lentes_contato, dorme_brucos_lado, 
-          fez_extensao_antes, observacoes, mapping, estilo, modelo_fios, espessura, curvatura, adesivo_cola
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
+          fez_extensao_antes, observacoes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
         [
           id,
           clienteId,
@@ -323,18 +305,12 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
           String(procedimento_recente_olhos || ''),
           String(procedimento_recente_olhos_qual || ''),
           String(possui_alergia || ''),
-          String(possui_alergia_qual || ''), // Passando a variável correta para o banco
+          String(alergia_qual || ''),
           String(sensibilidade_olhos || ''),
           String(usa_lentes_contato || ''),
           String(dorme_brucos_lado || ''),
           String(fez_extensao_antes || ''),
-          String(observacoes || ''),
-          String(mapping || ''),
-          String(estilo || ''),
-          String(modelo_fios || ''),
-          String(espessura || ''),
-          String(curvatura || ''),
-          String(adesivo_cola || '')
+          String(observacoes || '')
         ]
       );
     }
@@ -591,12 +567,6 @@ const initDb = async () => {
         dorme_brucos_lado VARCHAR(10),
         fez_extensao_antes VARCHAR(10),
         observacoes TEXT,
-        mapping TEXT,
-        estilo TEXT,
-        modelo_fios TEXT,
-        espessura VARCHAR(50),
-        curvatura VARCHAR(50),
-        adesivo_cola VARCHAR(100),
         atualizado_em TIMESTAMP DEFAULT NOW()
       );
     `);
