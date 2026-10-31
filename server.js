@@ -94,16 +94,24 @@ app.post('/api/cadastro', async (req, res) => {
       return res.status(409).json({ mensagem: 'Este e-mail já está cadastrado.' });
     }
 
-    const id = makeId('user');
+    const userId = makeId('user');
     const senhaHash = await bcrypt.hash(senha, 10);
     const tipo = 'cliente';
 
+    // 1. Cria o usuário na tabela de autenticação
     await pool.query(
       'INSERT INTO users (id, nome, email, senha, tipo) VALUES ($1, $2, $3, $4, $5)',
-      [id, nome, email, senhaHash, tipo]
+      [userId, nome, email, senhaHash, tipo]
     );
 
-    res.status(201).json({ id, mensagem: 'Cadastro realizado com sucesso.' });
+    // 2. Insere automaticamente os dados na tabela de clientes do estúdio
+    const clientId = makeId('cli');
+    await pool.query(
+      'INSERT INTO clients (id, nome, email) VALUES ($1, $2, $3)',
+      [clientId, nome, email]
+    );
+
+    res.status(201).json({ id: userId, mensagem: 'Cadastro realizado com sucesso.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ mensagem: 'Erro interno no servidor.' });
@@ -399,7 +407,7 @@ app.delete('/api/servicos/:id', requireAuth, requireMaster, async (req, res) => 
   }
 });
 
-// Rota ajustada para retornar todos os agendamentos para qualquer usuário autenticado
+// Retorna todos os agendamentos para qualquer usuário logado ver a agenda geral
 app.get('/api/agendamentos', requireAuth, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM appointments ORDER BY data_hora ASC');
