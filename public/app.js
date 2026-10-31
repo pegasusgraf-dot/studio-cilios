@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = null;
   let authMode = 'login';
   let registeredClients = [];
-  let currentCalendarDate = new Date(); // Variável para controlar o mês exibido no mini-calendário lateral
+  let currentCalendarDate = new Date();
 
   const setMessage = (element, message, isError = false) => {
     if (!element) return;
@@ -494,6 +494,23 @@ document.addEventListener('DOMContentLoaded', () => {
     fichaClienteId.value = cliente.id;
     fichaForm.reset();
 
+    // Preenche o Cartão de Identificação no topo da ficha
+    document.getElementById('cartao-nome').textContent = cliente.nome;
+    document.getElementById('cartao-tel').textContent = cliente.telefone || '—';
+    document.getElementById('cartao-cpf').textContent = cliente.cpf || '—';
+    document.getElementById('cartao-nasc').textContent = cliente.data_nascimento || '—';
+
+    // Gera o QR Code no Cartão da Cliente
+    const qrContainer = document.getElementById('qrcode-ficha');
+    if (qrContainer) {
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: `Cliente: ${cliente.nome} | Tel: ${cliente.telefone || ''} | CPF: ${cliente.cpf || ''}`,
+        width: 70,
+        height: 70
+      });
+    }
+
     const historicoBox = document.getElementById('ficha-historico-lista');
     historicoBox.innerHTML = 'Carregando histórico...';
 
@@ -528,19 +545,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setRadio('gestante', ficha.gestante);
         setRadio('procedimento_recente_olhos', ficha.procedimento_recente_olhos);
         setRadio('possui_alergia', ficha.possui_alergia);
-        setRadio('possui_glaucoma_ou_ocular', ficha.possui_glaucoma_ou_ocular);
-        setRadio('esta_em_tratamento', ficha.esta_em_tratamento);
 
         if (fichaForm.procedimento_recente_olhos_qual) fichaForm.procedimento_recente_olhos_qual.value = ficha.procedimento_recente_olhos_qual || '';
-        if (fichaForm.alergia_qual) fichaForm.alergia_qual.value = ficha.alergia_qual || '';
-        if (fichaForm.glaucoma_ocular_qual) fichaForm.glaucoma_ocular_qual.value = ficha.glaucoma_ocular_qual || '';
-        if (fichaForm.informacoes_adicionais) fichaForm.informacoes_adicionais.value = ficha.informacoes_adicionais || '';
-        if (fichaForm.mapping) fichaForm.mapping.value = ficha.mapping || '';
-        if (fichaForm.estilo) fichaForm.estilo.value = ficha.estilo || '';
-        if (fichaForm.modelo_fios) fichaForm.modelo_fios.value = ficha.modelo_fios || '';
-        if (fichaForm.espessura) fichaForm.espessura.value = ficha.espessura || '';
-        if (fichaForm.curvatura) fichaForm.curvatura.value = ficha.curvatura || '';
-        if (fichaForm.adesivo_cola) fichaForm.adesivo_cola.value = ficha.adesivo_cola || '';
+        if (fichaForm.possui_alergia_qual) fichaForm.possui_alergia_qual.value = ficha.possui_alergia_qual || '';
+        if (fichaForm.observacoes) fichaForm.observacoes.value = ficha.observacoes || '';
       }
     } catch (e) {}
 
@@ -551,7 +559,25 @@ document.addEventListener('DOMContentLoaded', () => {
     fichaModal.style.display = 'none';
   });
 
-  document.getElementById('btn-imprimir-ficha')?.addEventListener('click', () => {
+  document.getElementById('btn-imprimir-cartao')?.addEventListener('click', () => {
+    const cartaoHTML = document.getElementById('cartao-cliente-container').outerHTML;
+    const janelaImpressao = window.open('', '', 'width=600,height=400');
+    janelaImpressao.document.write(`
+      <html>
+        <head>
+          <title>Cartão de Identificação</title>
+          <style>body { font-family: Arial, sans-serif; padding: 20px; }</style>
+        </head>
+        <body>
+          ${cartaoHTML}
+          <script>window.print(); window.close();<\/script>
+        </body>
+      </html>
+    `);
+    janelaImpressao.document.close();
+  });
+
+  document.getElementById('print-ficha-btn')?.addEventListener('click', () => {
     window.print();
   });
 
@@ -578,17 +604,12 @@ document.addEventListener('DOMContentLoaded', () => {
       procedimento_recente_olhos: getRadioVal('procedimento_recente_olhos'),
       procedimento_recente_olhos_qual: formData.get('procedimento_recente_olhos_qual') || '',
       possui_alergia: getRadioVal('possui_alergia'),
-      alergia_qual: formData.get('alergia_qual') || '',
-      possui_glaucoma_ou_ocular: getRadioVal('possui_glaucoma_ou_ocular'),
-      glaucoma_ocular_qual: formData.get('glaucoma_ocular_qual') || '',
-      esta_em_tratamento: getRadioVal('esta_em_tratamento'),
-      informacoes_adicionais: formData.get('informacoes_adicionais') || '',
-      mapping: formData.get('mapping') || '',
-      estilo: formData.get('estilo') || '',
-      modelo_fios: formData.get('modelo_fios') || '',
-      espessura: formData.get('espessura') || '',
-      curvatura: formData.get('curvatura') || '',
-      adesivo_cola: formData.get('adesivo_cola') || ''
+      possui_alergia_qual: formData.get('possui_alergia_qual') || '',
+      sensibilidade_olhos: getRadioVal('sensibilidade_olhos'),
+      usa_lentes_contato: getRadioVal('usa_lentes_contato'),
+      dorme_brucos_lado: getRadioVal('dorme_brucos_lado'),
+      fez_extensao_antes: getRadioVal('fez_extensao_antes'),
+      observacoes: formData.get('observacoes') || ''
     };
 
     try {
@@ -651,7 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   };
 
-  // Renderizador do mini-calendário lateral com suporte a navegação de meses
   const renderizarCalendarioLateral = (appointments) => {
     const container = document.getElementById('calendario-lateral');
     if (!container) return;
@@ -721,7 +741,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const statNextDetail = document.getElementById('stat-next-detail');
     const emptyState = document.getElementById('empty-state');
 
-    // Captura os filtros de período (De / Até)
     const startDateInput = document.getElementById('appointment-date-start');
     const endDateInput = document.getElementById('appointment-date-end');
     const startDate = startDateInput ? startDateInput.value : '';
@@ -735,25 +754,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const appointments = await apiFetch('/agendamentos');
-      
       renderizarCalendarioLateral(appointments);
 
       const filterVal = appointmentFilter ? appointmentFilter.value : 'todos';
 
       let filtered = appointments.filter(a => {
-        // Filtro por serviço
         if (filterVal !== 'todos' && String(a.servico_id) !== filterVal) {
           return false;
         }
 
         const appDateStr = a.data_hora ? a.data_hora.split('T')[0] : '';
 
-        // Filtro de período (De / Até) ou ocultar passado por padrão
         if (startDate || endDate) {
           if (startDate && appDateStr < startDate) return false;
           if (endDate && appDateStr > endDate) return false;
         } else {
-          // PADRÃO: Se o usuário não preencheu o período, mostra apenas a partir de hoje
           if (appDateStr < todayStr) return false;
         }
 
@@ -783,7 +798,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (emptyState) emptyState.hidden = true;
           filtered.forEach(apt => {
             const dateObj = new Date(apt.data_hora);
-            const dayNumber = String(dateObj.getDate()).padStart(2, '0'); // Extrai o número do dia em destaque
+            const dayNumber = String(dateObj.getDate()).padStart(2, '0');
 
             const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
             const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
@@ -864,7 +879,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { console.error(e); }
   };
 
-  // Event Listeners para acionar a filtragem de data automaticamente
   document.getElementById('appointment-date-start')?.addEventListener('change', renderAppointments);
   document.getElementById('appointment-date-end')?.addEventListener('change', renderAppointments);
   
