@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setRadio('fez_extensao_antes', ficha.fez_extensao_antes);
 
         if (fichaForm.procedimento_recente_olhos_qual) fichaForm.procedimento_recente_olhos_qual.value = ficha.procedimento_recente_olhos_qual || '';
-        if (fichaForm.possui_alergia_qual) fichaForm.possui_alergia_qual.value = ficha.possui_alergia_qual || '';
+        if (fichaForm.possui_alergia_qual) fichaForm.possui_alergia_qual.value = ficha.alergia_qual || '';
         if (fichaForm.observacoes) fichaForm.observacoes.value = ficha.observacoes || '';
       }
     } catch (e) {}
