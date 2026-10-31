@@ -342,7 +342,7 @@
           </div>
         </section>
 
-        <!-- TELA DE CRACHÁ DE CLIENTES (COM LOGO NO CANTO SUPERIOR ESQUERDO) -->
+        <!-- TELA DE CRACHÁ DE CLIENTES (COM LOGO DEFINITIVO NA PASTA img/logo.png) -->
         <section class="view-panel" id="cracha-view" hidden>
           <div class="section-heading">
             <h2>Crachá de Identificação de Clientes</h2>
@@ -355,17 +355,12 @@
                   <option value="">Carregando clientes...</option>
                 </select>
               </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Incluir Logotipo da Loja
-                <input type="file" id="input-logo-cracha" accept="image/*" style="padding: 5px; border: 1px solid #ced4da; border-radius: 6px; background: #f8fafc; font-size: 11px;">
-              </label>
             </div>
 
-            <!-- CRACHÁ COM LOGO NO CANTO SUPERIOR ESQUERDO ACIMA DO CABEÇALHO -->
+            <!-- CRACHÁ COM LOGO FIXO NO CANTO SUPERIOR ESQUERDO ACIMA DO CABEÇALHO -->
             <div id="cracha-card-container" class="cracha-card">
               <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f3e8ff; padding-bottom: 8px;">
-                <img id="preview-logo-cracha" src="" alt="Logo" style="max-height: 35px; max-width: 90px; object-fit: contain;" hidden>
+                <img id="preview-logo-cracha" src="img/logo.png" alt="Logotipo GH Lash Studio" style="max-height: 35px; max-width: 90px; object-fit: contain;">
                 <div style="font-size: 10px; text-transform: uppercase; font-weight: bold; color: #a855f7; letter-spacing: 1px; text-align: right; flex: 1;">GH Lash Studio</div>
               </div>
               <h4 id="cracha-nome" style="margin: 0 0 12px 0; font-size: 18px; color: #3b0764; font-weight: 700;">Selecione uma cliente</h4>
