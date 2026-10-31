@@ -241,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Botão de Impressão do Crachá
   document.getElementById('btn-imprimir-cracha-selecionado')?.addEventListener('click', () => {
     if (!selectClienteCracha.value) {
       showToast('Selecione uma cliente para imprimir o crachá.', true);
@@ -249,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.print();
   });
 
-  // Lógica para carregar o logotipo personalizado no crachá
+  // Upload e pré-visualização do Logotipo no Crachá
   document.getElementById('input-logo-cracha')?.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
