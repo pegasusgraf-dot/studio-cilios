@@ -16,7 +16,7 @@
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
       .auth-layout { display: flex; width: 100vw; height: 100vh; background: #fff; }
       .auth-intro { flex: 1; background: linear-gradient(135deg, #e879f9 0%, #a855f7 100%); color: white; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
-      .auth-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; background: #ffffff; overflow-y: auto; }
+      .auth-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; background: #ffffff; }
       
       .cracha-card { 
         width: 380px; 
@@ -90,45 +90,16 @@
       </section>
 
       <section class="auth-panel">
-        <div class="auth-box" style="width: 100%; max-width: 420px; padding: 20px 0;">
+        <div class="auth-box" style="width: 100%; max-width: 380px;">
           <p class="eyebrow" id="auth-eyebrow" style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #666; font-weight: bold;">BEM-VINDA DE VOLTA</p>
           <h2 id="auth-title" style="font-size: 24px; margin: 5px 0 8px 0; color: #111;">Acesse sua conta</h2>
           
           <form id="auth-form" class="form-stack" style="display: flex; flex-direction: column; gap: 15px;">
-            <!-- O atributo hidden abaixo garante que os campos de cadastro fiquem ocultos na tela inicial -->
-            <div id="register-fields" hidden style="display: flex; flex-direction: column; gap: 12px;">
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Nome completo
-                <input name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
+            <label class="field" id="name-field" hidden style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
+              Nome completo
+              <input name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
+            </label>
 
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Telefone / WhatsApp
-                <input name="telefone" placeholder="(00) 00000-0000" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                CPF
-                <input name="cpf" placeholder="000.000.000-00" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Data de Nascimento
-                <input type="date" name="data_nascimento" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Profissão
-                <input name="profissao" placeholder="Sua profissão" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Endereço
-                <input name="endereco" placeholder="Endereço completo" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
-            </div>
-
-            <!-- APENAS E-MAIL E SENHA APARECEM NA TELA DE LOGIN INICIAL -->
             <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
               E-mail
               <input name="email" type="email" required placeholder="seu@email.com" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
@@ -402,7 +373,7 @@
           </div>
         </section>
 
-        <!-- MODAL DA FICHA E HISTÓRICO DO CLIENTE (APENAS PARA O MASTER) -->
+        <!-- MODAL DA FICHA E HISTÓRICO DO CLIENTE -->
         <div id="ficha-modal" class="modal-overlay">
           <div class="modal-card">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
