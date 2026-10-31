@@ -95,7 +95,7 @@
           <h2 id="auth-title" style="font-size: 24px; margin: 5px 0 8px 0; color: #111;">Acesse sua conta</h2>
           
           <form id="auth-form" class="form-stack" style="display: flex; flex-direction: column; gap: 15px;">
-            <!-- Os campos de cadastro começam ocultos (hidden) e só abrem ao clicar em 'Criar conta' -->
+            <!-- TUDO AQUI DENTRO FICA ESCONDIDO NO LOGIN E SÓ APARECE AO CLICAR EM 'CRIAR CONTA' -->
             <div id="register-fields" hidden style="display: flex; flex-direction: column; gap: 12px;">
               <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
                 Nome completo
@@ -126,9 +126,97 @@
                 Endereço
                 <input name="endereco" placeholder="Endereço completo" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
               </label>
-            </div>
 
-            <!-- Estes campos aparecem sempre (tanto no login quanto no cadastro) -->
+              <hr style="border:0; border-top: 1px solid #eee; margin: 10px 0;">
+              <h4 style="margin: 0; font-size: 14px; color: #a855f7;">Ficha de Anamnese</h4>
+
+              <div class="question-row">
+                <span>Está de rímel?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="usa_rimel" value="sim"> Sim</label>
+                  <label><input type="radio" name="usa_rimel" value="nao" checked> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Possui problemas de tireoide?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="problemas_tireoide" value="sim"> Sim</label>
+                  <label><input type="radio" name="problemas_tireoide" value="nao" checked> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Possui Diabetes?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="possui_diabetes" value="sim"> Sim</label>
+                  <label><input type="radio" name="possui_diabetes" value="nao" checked> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>É gestante?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="gestante" value="sim"> Sim</label>
+                  <label><input type="radio" name="gestante" value="nao" checked> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Procedimento recente nos olhos?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="procedimento_recente_olhos" value="sim"> Sim</label>
+                  <label><input type="radio" name="procedimento_recente_olhos" value="nao" checked> Não</label>
+                </div>
+              </div>
+              <input type="text" name="procedimento_recente_olhos_qual" placeholder="Se sim, qual procedimento?" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+
+              <div class="question-row">
+                <span>Possui alergia?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="possui_alergia" value="sim"> Sim</label>
+                  <label><input type="radio" name="possui_alergia" value="nao" checked> Não</label>
+                </div>
+              </div>
+              <input type="text" name="alergia_qual" placeholder="Se sim, qual alergia?" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+
+              <div class="question-row">
+                <span>Sensibilidade nos olhos?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="sensibilidade_olhos" value="sim"> Sim</label>
+                  <label><input type="radio" name="sensibilidade_olhos" value="nao" checked> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Usa lentes de contato?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="usa_lentes_contato" value="sim"> Sim</label>
+                  <label><input type="radio" name="usa_lentes_contato" value="nao" checked> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Dorme de bruços ou lado?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="dorme_brucos_lado" value="sim"> Sim</label>
+                  <label><input type="radio" name="dorme_brucos_lado" value="nao" checked> Não</label>
+                </div>
+              </div>
+
+              <div class="question-row">
+                <span>Já fez extensão antes?</span>
+                <div class="question-options">
+                  <label><input type="radio" name="fez_extensao_antes" value="sim"> Sim</label>
+                  <label><input type="radio" name="fez_extensao_antes" value="nao" checked> Não</label>
+                </div>
+              </div>
+
+              <textarea name="observacoes" rows="2" placeholder="Observações gerais..." style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;"></textarea>
+            </div>
+            <!-- FIM DA DIV QUE FICA OCULTA -->
+
+            <!-- APENAS ESTES DOIS CAMPOS APARECEM NO LOGIN -->
             <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
               E-mail
               <input name="email" type="email" required placeholder="seu@email.com" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
