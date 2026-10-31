@@ -18,9 +18,23 @@
       .auth-intro { flex: 1; background: linear-gradient(135deg, #e879f9 0%, #a855f7 100%); color: white; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
       .auth-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; background: #ffffff; }
       
-      /* Crachá com Borda Contínua na Cor do Tema (#a855f7) */
-      .cracha-card { width: 340px; background: #ffffff; border: 2px solid #a855f7; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin: 20px auto; text-align: left; }
-      
+      /* Crachá Maior, Mais Bem Distribuído com Borda Contínua (#a855f7) */
+      .cracha-card { 
+        width: 380px; 
+        min-height: 220px;
+        background: #ffffff; 
+        border: 2px solid #a855f7; 
+        border-radius: 14px; 
+        padding: 22px; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: space-between; 
+        box-shadow: 0 6px 12px -2px rgba(168, 85, 247, 0.15); 
+        margin: 20px auto; 
+        text-align: left; 
+        box-sizing: border-box;
+      }
+
       .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
       .modal-card { background: white; width: 100%; max-width: 700px; border-radius: 8px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
       .question-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; background: #f8fafc; padding: 8px 12px; border-radius: 6px; }
@@ -59,7 +73,7 @@
           justify-content: center;
         }
         #cracha-view button, #cracha-view select, #cracha-view p, #cracha-view label { display: none !important; }
-        .cracha-card { border: 2px solid #a855f7 !important; box-shadow: none; width: 90mm; height: 55mm; }
+        .cracha-card { border: 2px solid #a855f7 !important; box-shadow: none; width: 95mm; height: 60mm; }
       }
     </style>
   </head>
@@ -328,12 +342,12 @@
           </div>
         </section>
 
-        <!-- TELA DE CRACHÁ DE CLIENTES (COM BOTÃO DE LOGO E BORDA CONTÍNUA DO TEMA) -->
+        <!-- TELA DE CRACHÁ DE CLIENTES (COM LOGO NO CANTO SUPERIOR ESQUERDO) -->
         <section class="view-panel" id="cracha-view" hidden>
           <div class="section-heading">
             <h2>Crachá de Identificação de Clientes</h2>
           </div>
-          <div class="card" style="max-width: 480px; margin: 0 auto; padding: 25px;">
+          <div class="card" style="max-width: 500px; margin: 0 auto; padding: 25px;">
             <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
               <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
                 Selecione a Cliente
@@ -343,18 +357,19 @@
               </label>
 
               <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Incluir Logotipo no Crachá
+                Incluir Logotipo da Loja
                 <input type="file" id="input-logo-cracha" accept="image/*" style="padding: 5px; border: 1px solid #ced4da; border-radius: 6px; background: #f8fafc; font-size: 11px;">
               </label>
             </div>
 
+            <!-- CRACHÁ COM LOGO NO CANTO SUPERIOR ESQUERDO ACIMA DO CABEÇALHO -->
             <div id="cracha-card-container" class="cracha-card">
-              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
-                <div style="font-size: 10px; text-transform: uppercase; font-weight: bold; color: #a855f7; letter-spacing: 1px;">GH Lash Studio • Cartão de Identificação</div>
-                <img id="preview-logo-cracha" src="" alt="Logo" style="max-height: 28px; max-width: 60px; object-fit: contain;" hidden>
+              <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f3e8ff; padding-bottom: 8px;">
+                <img id="preview-logo-cracha" src="" alt="Logo" style="max-height: 35px; max-width: 90px; object-fit: contain;" hidden>
+                <div style="font-size: 10px; text-transform: uppercase; font-weight: bold; color: #a855f7; letter-spacing: 1px; text-align: right; flex: 1;">GH Lash Studio</div>
               </div>
-              <h4 id="cracha-nome" style="margin: 5px 0; font-size: 16px; color: #3b0764;">Selecione uma cliente</h4>
-              <div style="font-size: 12px; color: #333; line-height: 1.6;">
+              <h4 id="cracha-nome" style="margin: 0 0 12px 0; font-size: 18px; color: #3b0764; font-weight: 700;">Selecione uma cliente</h4>
+              <div style="font-size: 13px; color: #333; line-height: 1.8; width: 100%;">
                 <div><strong>Telefone:</strong> <span id="cracha-tel">—</span></div>
                 <div><strong>CPF:</strong> <span id="cracha-cpf">—</span></div>
                 <div><strong>Nascimento:</strong> <span id="cracha-nasc">—</span></div>
