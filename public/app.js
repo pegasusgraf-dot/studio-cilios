@@ -92,10 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
     authMode = mode;
     const isRegister = mode === 'register';
     if (registerFields) registerFields.hidden = !isRegister;
-    if (authEyebrow) authEyebrow.textContent = isRegister ? 'CRIE SUA CONTA & FICHA' : 'BEM-VINDA DE VOLTA';
+    if (authEyebrow) authEyebrow.textContent = isRegister ? 'CRIE SUA CONTA' : 'BEM-VINDA DE VOLTA';
     if (authTitle) authTitle.textContent = isRegister ? 'Crie sua conta' : 'Acesse sua conta';
     const submitButton = authForm ? authForm.querySelector('button[type="submit"]') : null;
-    if (submitButton) submitButton.textContent = isRegister ? 'Criar conta & Preencher ficha' : 'Entrar';
+    if (submitButton) submitButton.textContent = isRegister ? 'Criar conta' : 'Entrar';
   };
 
   const renderMasterMetrics = async () => {
