@@ -240,7 +240,7 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
     procedimento_recente_olhos,
     procedimento_recente_olhos_qual,
     possui_alergia,
-    alergia_qual,
+    possui_alergia_qual, // Correção: Mapeado para capturar do req.body
     sensibilidade_olhos,
     usa_lentes_contato,
     dorme_brucos_lado,
@@ -289,7 +289,7 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
           String(procedimento_recente_olhos || ''),
           String(procedimento_recente_olhos_qual || ''),
           String(possui_alergia || ''),
-          String(alergia_qual || ''),
+          String(possui_alergia_qual || ''), // Passando a variável correta para o banco
           String(sensibilidade_olhos || ''),
           String(usa_lentes_contato || ''),
           String(dorme_brucos_lado || ''),
@@ -323,7 +323,7 @@ app.post('/api/clientes/:id/ficha', requireAuth, requireMaster, async (req, res)
           String(procedimento_recente_olhos || ''),
           String(procedimento_recente_olhos_qual || ''),
           String(possui_alergia || ''),
-          String(alergia_qual || ''),
+          String(possui_alergia_qual || ''), // Passando a variável correta para o banco
           String(sensibilidade_olhos || ''),
           String(usa_lentes_contato || ''),
           String(dorme_brucos_lado || ''),
