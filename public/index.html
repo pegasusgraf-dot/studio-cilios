@@ -95,7 +95,7 @@
           <h2 id="auth-title" style="font-size: 24px; margin: 5px 0 8px 0; color: #111;">Acesse sua conta</h2>
           
           <form id="auth-form" class="form-stack" style="display: flex; flex-direction: column; gap: 15px;">
-            <!-- BLOCO DE CADASTRO DE CLIENTE: Começa oculto e só abre ao clicar em 'Criar conta' -->
+            <!-- CAMPO DE NOME E TELEFONE QUE SÓ APARECEM AO CLICAR EM 'CRIAR CONTA' -->
             <div id="register-fields" hidden style="display: flex; flex-direction: column; gap: 12px;">
               <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
                 Nome completo
@@ -106,29 +106,9 @@
                 Telefone / WhatsApp
                 <input name="telefone" placeholder="(00) 00000-0000" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
               </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                CPF
-                <input name="cpf" placeholder="000.000.000-00" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Data de Nascimento
-                <input type="date" name="data_nascimento" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Profissão
-                <input name="profissao" placeholder="Sua profissão" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
-
-              <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
-                Endereço
-                <input name="endereco" placeholder="Endereço completo" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
-              </label>
             </div>
 
-            <!-- ESTES DOIS CAMPOS APARECEM NA TELA INICIAL (LOGIN) -->
+            <!-- E-MAIL E SENHA (Sempre visíveis no login e cadastro) -->
             <label class="field" style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold; color: #333; gap: 5px;">
               E-mail
               <input name="email" type="email" required placeholder="seu@email.com" style="width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px;">
