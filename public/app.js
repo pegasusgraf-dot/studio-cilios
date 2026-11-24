@@ -260,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
       panel.hidden = !isVisible;
       panel.classList.toggle('is-visible', isVisible);
     });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (viewName === 'metricas') renderMasterMetrics();
     if (viewName === 'clientes') renderClients();
     if (viewName === 'cracha') atualizarSelectCracha();
