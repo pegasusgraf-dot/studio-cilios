@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const serviceSubmitButton = document.getElementById('service-submit');
   const serviceCancelButton = document.getElementById('service-cancel');
   const appointmentForm = document.getElementById('appointment-form');
+  const appointmentMessage = document.getElementById('appointment-message');
   const serviceSelect = document.getElementById('service-select');
   const appointmentFilter = document.getElementById('appointment-filter');
   const accountName = document.getElementById('account-name');
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = null;
   let authMode = 'login';
   let registeredClients = [];
+  let registeredServices = [];
   let currentCalendarDate = new Date();
 
   const setMessage = (element, message, isError = false) => {
@@ -92,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
     authMode = mode;
     const isRegister = mode === 'register';
     
-    // Controla a visibilidade dos campos de cadastro de cliente
     if (registerFields) registerFields.hidden = !isRegister;
 
     if (authEyebrow) authEyebrow.textContent = isRegister ? 'CRIE SUA CONTA' : 'BEM-VINDA DE VOLTA';
@@ -337,22 +338,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminCount = document.getElementById('admin-count');
     try {
       const services = await apiFetch('/servicos');
-      if (statServices) statServices.textContent = String(services.length || 0);
-      if (adminCount) adminCount.textContent = String(services.length || 0);
+      registeredServices = Array.isArray(services) ? services : [];
+      if (statServices) statServices.textContent = String(registeredServices.length || 0);
+      if (adminCount) adminCount.textContent = String(registeredServices.length || 0);
 
       if (serviceSelect) {
         serviceSelect.innerHTML = '<option value="">Selecione um procedimento</option>';
-        services.forEach(s => {
+        registeredServices.forEach(s => {
           const opt = document.createElement('option');
           opt.value = s.id;
-          opt.textContent = `${s.nome} — ${formatCurrency(s.valor)}`;
+          opt.textContent = `${s.nome} — ${formatCurrency(s.valor)} (${s.duracao_minutos || 60} min)`;
           serviceSelect.appendChild(opt);
         });
       }
+
+      if (appointmentFilter) {
+        const valorAtualFiltro = appointmentFilter.value || 'todos';
+        appointmentFilter.innerHTML = '<option value="todos">Todos os serviços</option>';
+        registeredServices.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = String(s.id);
+          opt.textContent = s.nome;
+          appointmentFilter.appendChild(opt);
+        });
+        appointmentFilter.value = valorAtualFiltro;
+      }
+
       const listEl = document.getElementById('service-list');
       if (listEl) {
-        listEl.innerHTML = services.length ? '' : '<p>Nenhum serviço cadastrado.</p>';
-        services.forEach(s => {
+        listEl.innerHTML = registeredServices.length ? '' : '<p>Nenhum serviço cadastrado.</p>';
+        registeredServices.forEach(s => {
           const row = document.createElement('div');
           row.className = 'service-item';
           row.style.display = 'flex';
@@ -396,6 +411,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     } catch (e) { console.error(e); }
+  };
+
+  const obterDuracaoAgendamentoMinutos = (apt) => {
+    const duracaoDireta = Number(apt?.duracao_minutos);
+    if (Number.isFinite(duracaoDireta) && duracaoDireta > 0) return duracaoDireta;
+
+    const servico = registeredServices.find((s) => String(s.id) === String(apt?.servico_id));
+    const duracaoServico = Number(servico?.duracao_minutos);
+    if (Number.isFinite(duracaoServico) && duracaoServico > 0) return duracaoServico;
+
+    return 60;
+  };
+
+  const verificarConflitoAgendamento = async (servicoId, dataHoraStr) => {
+    const servicoSelecionado = registeredServices.find((s) => String(s.id) === String(servicoId));
+    const duracaoNova = Number(servicoSelecionado?.duracao_minutos);
+
+    if (!servicoSelecionado || !Number.isFinite(duracaoNova) || duracaoNova <= 0) {
+      return { conflito: false };
+    }
+
+    const novoInicio = new Date(dataHoraStr).getTime();
+    if (Number.isNaN(novoInicio)) {
+      return { conflito: false };
+    }
+    const novoFim = novoInicio + duracaoNova * 60 * 1000;
+
+    const appointments = await apiFetch('/agendamentos');
+
+    for (const apt of appointments) {
+      const status = (apt.status || 'pendente').toLowerCase();
+      if (status === 'cancelado') continue;
+
+      const existenteInicio = new Date(apt.data_hora).getTime();
+      if (Number.isNaN(existenteInicio)) continue;
+
+      const duracaoExistente = obterDuracaoAgendamentoMinutos(apt);
+      const existenteFim = existenteInicio + duracaoExistente * 60 * 1000;
+
+      const haSobreposicao = novoInicio < existenteFim && novoFim > existenteInicio;
+      if (haSobreposicao) {
+        return {
+          conflito: true,
+          agendamento: apt,
+          existenteInicio,
+          existenteFim,
+        };
+      }
+    }
+
+    return { conflito: false };
   };
 
   serviceCancelButton?.addEventListener('click', () => {
@@ -777,6 +843,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!registeredClients.length) {
         try { registeredClients = await apiFetch('/clientes'); } catch (e) {}
       }
+      if (!registeredServices.length) {
+        try { registeredServices = await apiFetch('/servicos'); } catch (e) {}
+      }
 
       const appointments = await apiFetch('/agendamentos');
       renderizarCalendarioLateral(appointments);
@@ -824,6 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
           filtered.forEach(apt => {
             const dateObj = new Date(apt.data_hora);
             const dayNumber = String(dateObj.getDate()).padStart(2, '0');
+            const duracaoMin = obterDuracaoAgendamentoMinutos(apt);
 
             const clienteEncontrado = registeredClients.find(c => c.nome.toLowerCase() === apt.usuario_nome.toLowerCase());
             const telefone = clienteEncontrado ? clienteEncontrado.telefone : '';
@@ -858,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="day-badge">${dayNumber}</span>
                 <div>
                   <strong>${apt.servico_nome} 💬</strong>
-                  <div class="muted">Cliente: <strong>${apt.usuario_nome}</strong> • ${formatDateTime(apt.data_hora)}</div>
+                  <div class="muted">Cliente: <strong>${apt.usuario_nome}</strong> • ${formatDateTime(apt.data_hora)} (${duracaoMin} min)</div>
                   <div style="font-size: 11px; margin-top: 4px; color: ${statusCor}; font-weight: bold;">
                     Status: ${status.toUpperCase()}
                   </div>
@@ -953,21 +1023,42 @@ document.addEventListener('DOMContentLoaded', () => {
   appointmentForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(appointmentForm);
+    const servicoId = formData.get('servico_id');
+    const dataHora = formData.get('data_hora');
+    const usuarioNome = formData.get('usuario_nome');
+
     try {
+      if (!registeredServices.length) {
+        const services = await apiFetch('/servicos');
+        registeredServices = Array.isArray(services) ? services : [];
+      }
+
+      const validacao = await verificarConflitoAgendamento(servicoId, dataHora);
+      if (validacao.conflito) {
+        const inicioFormatado = formatDateTime(validacao.existenteInicio);
+        const fimFormatado = formatDateTime(validacao.existenteFim);
+        const msg = `Horário indisponível: já existe "${validacao.agendamento.servico_nome}" para ${validacao.agendamento.usuario_nome} das ${inicioFormatado} às ${fimFormatado}.`;
+        setMessage(appointmentMessage, msg, true);
+        showToast(msg, true);
+        return;
+      }
+
       await apiFetch('/agendamentos', {
         method: 'POST',
         body: JSON.stringify({
-          servico_id: formData.get('servico_id'),
-          data_hora: formData.get('data_hora'),
-          usuario_nome: formData.get('usuario_nome')
+          servico_id: servicoId,
+          data_hora: dataHora,
+          usuario_nome: usuarioNome
         })
       });
       appointmentForm.reset();
+      setMessage(appointmentMessage, '');
       if (currentUser?.tipo !== 'master' && inputUsuarioNome) inputUsuarioNome.value = currentUser.nome;
       showToast('Agendamento criado com sucesso!');
       renderAppointments();
       renderMasterMetrics();
     } catch (err) {
+      setMessage(appointmentMessage, err.message, true);
       showToast(err.message, true);
     }
   });
